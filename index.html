@@ -144,7 +144,30 @@
   .shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh;}
   @media (max-width:880px){.shell{grid-template-columns:1fr;}}
   .sidebar{background:var(--paper);border-right:1px solid var(--line);padding:28px 18px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow-y:auto;}
-  @media (max-width:880px){.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line);padding:20px 16px;}}
+  .mobile-topbar{display:none;}
+  #sidebarOverlay{display:none;}
+  .sidebar-close-btn{display:none;}
+  @media (max-width:880px){
+    .mobile-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:13px 16px;background:var(--paper);border-bottom:1px solid var(--line);
+      position:sticky;top:0;z-index:60;}
+    .hamburger-btn{background:var(--paper);border:1px solid var(--line);border-radius:10px;
+      width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+    .hamburger-btn span,.hamburger-btn span::before,.hamburger-btn span::after{
+      content:'';display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;position:relative;}
+    .hamburger-btn span::before{position:absolute;top:-5px;}
+    .hamburger-btn span::after{position:absolute;top:5px;}
+    .sidebar{position:fixed;top:0;left:0;height:100dvh;width:82%;max-width:300px;z-index:200;
+      transform:translateX(-100%);transition:transform .28s ease;border-right:none;
+      box-shadow:18px 0 40px -20px rgba(36,18,89,0.25);}
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-close-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+      border-radius:50%;border:1px solid var(--line);background:var(--paper);cursor:pointer;
+      font-size:14px;color:var(--ink-faint);margin-left:auto;}
+    #sidebarOverlay{display:block;position:fixed;inset:0;background:rgba(20,10,50,0.42);
+      z-index:150;opacity:0;pointer-events:none;transition:opacity .25s ease;}
+    #sidebarOverlay.open{opacity:1;pointer-events:auto;}
+  }
   .brand{display:flex;align-items:center;gap:12px;padding:0 6px;}
   .brand-badge{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--violet));display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .brand svg{flex-shrink:0;}
@@ -310,13 +333,14 @@
   .cal-weekday{font-size:10.5px;font-weight:700;text-align:center;color:var(--ink-faint);padding:4px 0;text-transform:uppercase;}
   .cal-cell{position:relative;min-height:58px;border:1px solid var(--line);border-radius:9px;padding:6px;background:var(--paper);}
   .cal-cell.empty{background:transparent;border:none;}
-  .cal-cell.has-apps{border-color:var(--teal);cursor:pointer;}
+  .cal-cell.has-apps{border-color:var(--teal);cursor:pointer;background:var(--teal-soft);}
   .cal-daynum{font-size:11px;color:var(--ink-faint);}
   .cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
   .cal-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);}
   .cal-more{font-size:9px;color:var(--teal);font-weight:700;}
   .cal-tooltip{display:none;position:absolute;z-index:30;top:100%;left:0;margin-top:5px;background:var(--deep);color:#fff;border-radius:10px;padding:10px;min-width:210px;max-width:270px;box-shadow:var(--shadow);}
   .cal-cell.has-apps:hover .cal-tooltip{display:block;}
+  .cal-cell.has-apps.touch-open .cal-tooltip{display:block;}
   .cal-tooltip-item{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:11.5px;line-height:1.4;}
   .cal-tooltip-item:last-child{border-bottom:none;}
   .cal-tooltip-item strong{display:block;font-size:12px;}
@@ -350,12 +374,9 @@
     main{max-width:100%;}
   }
 
-  /* --- Tablet en vertical --- */
+  /* --- Tablet en vertical / celular: la barra lateral es un cajón deslizable --- */
   @media (max-width:880px){
-    nav.tabs{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:6px;-webkit-overflow-scrolling:touch;}
-    nav.tabs::-webkit-scrollbar{height:4px;}
-    nav.tabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
-    .tab-btn{flex-shrink:0;white-space:nowrap;}
+    .shell{grid-template-columns:1fr;}
     .sidebar{gap:14px;}
     .lang-switch{max-width:170px;}
     .hero{flex-wrap:wrap;justify-content:center;text-align:center;padding-bottom:20px;}
@@ -381,6 +402,9 @@
     .gap-date{width:100%;}
     .entrevista-record-row{flex-direction:column;align-items:flex-start;}
     table:not(#appsTable){font-size:12px;}
+    .cal-tooltip{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+      margin-top:0;min-width:0;width:82vw;max-width:320px;max-height:70vh;overflow-y:auto;z-index:220;}
+    .cal-cell.has-apps.touch-open::after{content:'';position:fixed;inset:0;background:rgba(20,10,50,0.4);z-index:210;}
   }
 
   /* --- Celulares pequeños --- */
@@ -427,8 +451,26 @@
 </div>
 
 <!-- ================= APP (siempre visible, sin gate) ================= -->
+<div class="mobile-topbar">
+  <div class="brand" style="padding:0;">
+    <div class="brand-badge">
+      <svg width="16" height="16" viewBox="0 0 30 30" fill="none">
+        <rect x="6" y="3" width="16" height="24" rx="4" fill="#fff"/>
+        <circle cx="17" cy="15" r="1.6" fill="var(--teal)"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <span class="k1" data-i18n="brandName">Puertas</span>
+    </div>
+  </div>
+  <button class="hamburger-btn" onclick="toggleSidebarMobile()" aria-label="Abrir menú"><span></span></button>
+</div>
+<div id="sidebarOverlay" onclick="closeSidebarMobile()"></div>
+
 <div class="shell">
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebarAside">
+    <button class="sidebar-close-btn" onclick="closeSidebarMobile()" aria-label="Cerrar menú">✕</button>
+
     <div class="brand">
       <div class="brand-badge">
         <svg width="16" height="16" viewBox="0 0 30 30" fill="none">
@@ -640,7 +682,6 @@
         </div>
         <div class="add-bar"><button class="btn" onclick="addApplication()" data-i18n="newAppBtn">+ Nueva solicitud</button>
           <button class="btn ghost" id="importAppsBtn" onclick="importarSolicitudesCapturas()" data-i18n="importAppsBtn">Importar solicitudes de mis capturas</button>
-          <button class="btn ghost" id="importInboxBtn" onclick="importarSolicitudesInbox()" data-i18n="importInboxBtn">Actualizar con mis correos (16 confirmadas)</button>
         </div>
       </div>
     </section>
@@ -661,7 +702,6 @@
         </div>
         <div id="contactsEmpty" class="empty" data-i18n="contactsEmpty">Aún no agregas contactos.</div>
         <div class="add-bar"><button class="btn" onclick="addContact()" data-i18n="newContactBtn">+ Nuevo contacto</button>
-          <button class="btn ghost" id="importContactsBtn" onclick="importarContactosRed()" data-i18n="importContactsBtn">Importar mis contactos de LinkedIn/Facebook</button>
         </div>
       </div>
     </section>
@@ -1289,6 +1329,16 @@ async function loadState(){
   renderAll();
 }
 
+/* ---------------- menú móvil (cajón deslizable) ---------------- */
+function toggleSidebarMobile(){
+  document.getElementById('sidebarAside').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebarMobile(){
+  document.getElementById('sidebarAside').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
 /* ---------------- tabs ---------------- */
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab-btn');
@@ -1297,6 +1347,7 @@ document.getElementById('tabs').addEventListener('click', e=>{
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById(btn.dataset.panel).classList.add('active');
+  closeSidebarMobile();
 });
 
 /* ---------------- inventario ---------------- */
@@ -1685,6 +1736,15 @@ function calendarMonthShift(delta){
   calendarViewDate.setMonth(calendarViewDate.getMonth()+delta);
   renderAppsCalendar();
 }
+function toggleCalTooltip(el, event){
+  if(event) event.stopPropagation();
+  const wasOpen = el.classList.contains('touch-open');
+  document.querySelectorAll('.cal-cell.touch-open').forEach(c=>c.classList.remove('touch-open'));
+  if(!wasOpen) el.classList.add('touch-open');
+}
+document.addEventListener('click', ()=>{
+  document.querySelectorAll('.cal-cell.touch-open').forEach(c=>c.classList.remove('touch-open'));
+});
 function renderAppsCalendar(){
   const grid = document.getElementById('calendarGrid');
   const label = document.getElementById('calendarMonthLabel');
@@ -1709,7 +1769,7 @@ function renderAppsCalendar(){
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dayApps = byDate[dateStr] || [];
     const hasApps = dayApps.length>0;
-    cells += `<div class="cal-cell ${hasApps?'has-apps':''}">
+    cells += `<div class="cal-cell ${hasApps?'has-apps':''}" ${hasApps ? `onclick="toggleCalTooltip(this, event)"` : ''}>
       <span class="cal-daynum">${d}</span>
       ${hasApps ? `<div class="cal-dots">${dayApps.slice(0,4).map(()=>'<span class="cal-dot"></span>').join('')}${dayApps.length>4?`<span class="cal-more">+${dayApps.length-4}</span>`:''}</div>` : ''}
       ${hasApps ? `<div class="cal-tooltip">${dayApps.map(a=>`
