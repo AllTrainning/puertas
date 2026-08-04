@@ -510,7 +510,6 @@
         <button class="save-link-btn" id="saveLinkBtn" onclick="openSaveModal()" data-i18n="saveLinkBtn">Guardar</button>
       </div>
       <div class="save-note" id="saveNote" style="margin-top:10px;"><span class="dotlive"></span><span id="saveNoteText" data-i18n="localSave">Guardado en este navegador</span></div>
-      <button class="save-link-btn" style="margin-top:8px;display:block;" onclick="showPortadaAgain()" data-i18n="verPortadaBtn">Ver portada de nuevo</button>
     </div>
   </aside>
 
@@ -859,7 +858,7 @@ const T = {
     portadaSub:'Aquí es donde organizas cada puerta que tocas, hasta que una se abra.',
     portadaBtn:'Comenzar',
     guestLabel:'Modo invitado', guestBadge:'Sin guardar',
-    logoutBtn:'Salir', saveLinkBtn:'Guardar', localSave:'Guardado en este navegador', verPortadaBtn:'Ver portada de nuevo',
+    logoutBtn:'Salir', saveLinkBtn:'Guardar', localSave:'Guardado en este navegador',
     savingNote:'Guardando…', savedLocalNote:'Guardado en este navegador', savedServerNote:'Guardado automático', errorNote:'No se pudo guardar',
     heroTitle:'Cuando una puerta se cierra',
     heroSub:'Aquí llevas orden de tu inventario, tus metas, tus solicitudes y tu red — mientras tocar puertas es el trabajo del día.',
@@ -970,7 +969,7 @@ const T = {
     portadaSub:'This is where you organize every door you knock on, until one opens.',
     portadaBtn:'Get started',
     guestLabel:'Guest mode', guestBadge:'Not saved',
-    logoutBtn:'Log out', saveLinkBtn:'Save', localSave:'Saved in this browser', verPortadaBtn:'View cover again',
+    logoutBtn:'Log out', saveLinkBtn:'Save', localSave:'Saved in this browser',
     savingNote:'Saving…', savedLocalNote:'Saved in this browser', savedServerNote:'Auto-saved', errorNote:'Could not save',
     heroTitle:'When one door closes',
     heroSub:'Keep your inventory, goals, applications, and network organized — while knocking on doors is the job for today.',
@@ -2096,15 +2095,8 @@ function renderAll(){
 }
 
 /* ---------------- portada ---------------- */
+/* Aparece siempre que se abre o recarga la app — no se recuerda ni se oculta. */
 function hidePortada(){
-  document.getElementById('portada').classList.add('hidden');
-  localStorage.setItem('portada-vista','1');
-}
-function showPortadaAgain(){
-  localStorage.removeItem('portada-vista');
-  document.getElementById('portada').classList.remove('hidden');
-}
-if(localStorage.getItem('portada-vista') === '1'){
   document.getElementById('portada').classList.add('hidden');
 }
 
