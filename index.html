@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuando una puerta se cierra — Organizador de búsqueda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Openpay.js — tokeniza la tarjeta en el navegador, nunca toca tu servidor -->
+<script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js"></script>
+<script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js"></script>
+<style>
+  /* Paleta e idea geométrica de la referencia: morado + turquesa sobre blanco,
+     bloques y círculos, tipografía redondeada y gruesa para títulos. */
+  :root{
+    --bg:#FFFFFF; --paper:#FFFFFF; --paper-soft:#F4F1FD;
+    --ink:#221A44; --ink-soft:#5B5478; --ink-faint:#9D97BE; --line:#E7E2FA;
+    --gold:#22D6C4; --gold-soft:#DFF9F5; --teal:#6C4EEA; --teal-soft:#EDE8FE;
+    --clay:#E0507A; --clay-soft:#FBE3EA;
+    --deep:#241259; --violet:#8F79FF;
+    --radius:22px; --shadow:0 1px 2px rgba(36,18,89,0.05), 0 12px 28px -14px rgba(36,18,89,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'Poppins',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;font-weight:400;}
+  h1,h2,h3,.display{font-family:'Baloo 2',sans-serif;font-weight:700;letter-spacing:-0.01em;}
+  .mono{font-family:'Poppins',sans-serif;text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:600;}
+  ::selection{background:var(--gold-soft);}
+  button{font-family:'Poppins',sans-serif;}
+
+  /* -------- portada -------- */
+  #portada{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(150deg, var(--deep) 0%, var(--teal) 55%, var(--violet) 100%);
+    padding:32px 24px;text-align:center;transition:opacity .5s ease, visibility .5s ease;overflow:hidden;}
+  #portada.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .portada-geo{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,64px);gap:6px;margin-bottom:34px;}
+  .portada-cell{width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,0.10);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .portada-ring{width:34px;height:34px;border-radius:50%;border:8px solid rgba(255,255,255,0.55);}
+  .portada-ring-sm{width:22px;height:22px;border-width:6px;}
+  .portada-quart{width:64px;height:64px;background:var(--gold);border-radius:0 100% 0 0;}
+  .portada-quart-flip{transform:rotate(180deg);background:#fff;opacity:.85;}
+  .portada-dot{background:var(--gold);}
+  .portada-dot::after{content:'';width:16px;height:16px;border-radius:50%;background:#fff;}
+  .portada-door-cell{background:rgba(255,255,255,0.14);}
+  .portada-door-svg{width:44px;height:44px;}
+  .portada-content{max-width:520px;}
+  .portada-eyebrow{color:rgba(255,255,255,0.75);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:0 0 14px;}
+  #portada h1{color:#fff;font-size:clamp(24px,4vw,36px);line-height:1.28;margin:0 0 16px;}
+  .portada-sub{color:rgba(255,255,255,0.85);font-size:15px;line-height:1.6;margin:0 0 30px;}
+  .portada-btn{background:#fff;color:var(--deep);border:none;border-radius:999px;padding:13px 34px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,0.35);}
+  .portada-btn:hover{background:var(--gold-soft);}
+  @media (max-width:480px){
+    .portada-geo{grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);}
+    .portada-cell{width:52px;height:52px;}
+  }
+
+  /* -------- acento geométrico por sección (idea de la imagen: cada
+     "página" conserva el lenguaje visual pero con su propio color líder) -------- */
+  #resumen{--accent:var(--teal); --accent-soft:var(--teal-soft);}
+  #inventario{--accent:var(--gold); --accent-soft:var(--gold-soft);}
+  #metas{--accent:var(--violet); --accent-soft:var(--teal-soft);}
+  #buscador{--accent:var(--gold); --accent-soft:var(--teal-soft);}
+  #solicitudes{--accent:var(--deep); --accent-soft:var(--paper-soft);}
+  #contactos{--accent:var(--gold); --accent-soft:var(--gold-soft);}
+  #curriculum{--accent:var(--teal); --accent-soft:var(--teal-soft);}
+  #frases{--accent:var(--violet); --accent-soft:var(--gold-soft);}
+
+  /* -------- decoración geométrica del hero (bloques + círculos) -------- */
+  .geo-hero{
+    display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);
+    width:150px;height:100px;border-radius:20px;overflow:hidden;flex-shrink:0;
+    box-shadow:var(--shadow);
+  }
+  .geo-cell{position:relative;overflow:hidden;}
+  .geo-cell.c-deep{background:var(--deep);}
+  .geo-cell.c-purple{background:var(--teal);}
+  .geo-cell.c-turq{background:var(--gold);}
+  .geo-cell.c-photo{background:var(--deep);display:flex;align-items:center;justify-content:center;}
+  .geo-cell .ring{position:absolute;border-radius:50%;border:10px solid var(--gold);}
+  .geo-cell .ring.tl{top:-24px;left:-24px;width:70px;height:70px;border-color:#fff;}
+  .geo-cell .quart{position:absolute;width:60px;height:60px;border-radius:50%;background:var(--gold);}
+  .geo-cell .quart.br{bottom:-30px;right:-30px;}
+  .geo-cell .quart.tl2{top:-30px;left:-30px;background:#fff;}
+  .geo-cell .dotwhite{position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;bottom:8px;right:8px;}
+  .geo-cell.c-photo svg{width:34px;height:34px;}
+
+  /* ---------- save/pay modal (overlay, not a gate) ---------- */
+  #saveOverlay{
+    position:fixed;inset:0;background:rgba(32,48,31,0.45);
+    display:none;align-items:center;justify-content:center;
+    padding:20px;z-index:1000;overflow-y:auto;
+  }
+  #saveOverlay.open{display:flex;}
+  .save-card{
+    background:var(--paper); border-radius:20px; box-shadow:var(--shadow);
+    padding:32px 30px; width:100%; max-width:440px; max-height:92vh; overflow-y:auto;
+    margin:auto;
+  }
+  .save-card-close{position:sticky;top:0;float:right;background:none;border:none;font-size:18px;color:var(--ink-faint);cursor:pointer;margin-bottom:-10px;}
+  .save-brand{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .save-brand .k1{font-family:'Baloo 2',sans-serif;font-size:18px;font-weight:600;}
+  .save-pitch{font-size:13.5px;color:var(--ink-soft);line-height:1.55;margin:0 0 20px;}
+  .save-tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--paper-soft);padding:4px;border-radius:10px;}
+  .save-tab{flex:1;text-align:center;padding:8px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-soft);}
+  .save-tab.active{background:var(--paper);color:var(--teal);box-shadow:0 1px 2px rgba(0,0,0,.06);}
+  .save-field{margin-bottom:13px;}
+  .save-field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;font-weight:600;}
+  .save-field input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:var(--bg);}
+  .save-field input:focus{outline:none;border-color:var(--teal);background:#fff;}
+  .save-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .amount-block{background:var(--gold-soft);border-radius:12px;padding:14px 16px;margin:16px 0;}
+  .amount-block .amount-label{font-size:12.5px;font-weight:700;color:#8a3f22;margin-bottom:8px;}
+  .amount-input-wrap{display:flex;align-items:center;gap:8px;}
+  .amount-input-wrap .cur{font-family:'Poppins',sans-serif;letter-spacing:.02em;font-weight:700;color:#8a3f22;}
+  .amount-input-wrap input{flex:1;font-family:'Baloo 2',sans-serif;font-size:20px;padding:8px 10px;border:1px solid #E3C1A4;border-radius:8px;background:#fff;}
+  .fixed-price-tag{display:flex;align-items:baseline;gap:6px;}
+  .fixed-price-tag .cur{font-family:'Poppins',sans-serif;font-weight:700;color:#8a3f22;font-size:16px;}
+  .fixed-price-tag .fixed-price-num{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:30px;color:#8a3f22;}
+  .fixed-price-tag .fixed-price-suffix{font-size:12px;color:#8a3f22;opacity:.75;}
+  .amount-chips{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}
+  .amount-chip{background:#fff;border:1px solid #E3C1A4;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#8a3f22;cursor:pointer;}
+  .amount-chip.selected{background:var(--gold);color:#fff;border-color:var(--gold);}
+  .amount-hint{font-size:11px;color:#8a3f22;margin-top:8px;line-height:1.5;}
+  .card-section-label{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:16px 0 10px;}
+  .save-submit{width:100%;padding:13px;border:none;border-radius:999px;background:var(--teal);color:#fff;font-weight:500;font-size:14.5px;cursor:pointer;margin-top:8px;letter-spacing:.02em;}
+  .save-submit:hover{opacity:.9;}
+  .save-submit:disabled{opacity:.6;cursor:not-allowed;}
+  .save-error{background:var(--clay-soft);color:var(--clay);font-size:12.5px;padding:9px 11px;border-radius:8px;margin-bottom:14px;display:none;}
+  .save-msg{background:var(--teal-soft);color:var(--teal);font-size:12.5px;padding:9px 11px;border-radius:8px;margin-bottom:14px;display:none;}
+  .save-forgot{display:block;text-align:center;margin-top:12px;font-size:12.5px;color:var(--ink-faint);cursor:pointer;text-decoration:underline;background:none;border:none;}
+  .save-secure{font-size:10.5px;color:var(--ink-faint);text-align:center;margin-top:14px;}
+
+  /* ---------- guest banner ---------- */
+  .guest-banner{
+    background:linear-gradient(135deg,var(--gold),#8a3f22); color:#fff;
+    border-radius:var(--radius); padding:16px 20px; margin-bottom:18px;
+    display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .guest-banner h3{color:#fff;margin:0 0 4px;font-size:15px;}
+  .guest-banner p{margin:0;font-size:12.5px;opacity:.92;max-width:44ch;}
+  .guest-banner button{background:#fff;border:none;color:#8a3f22;font-weight:600;padding:10px 20px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+
+  /* ---------- layout ---------- */
+  .shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh;}
+  @media (max-width:880px){.shell{grid-template-columns:1fr;}}
+  .sidebar{background:var(--paper);border-right:1px solid var(--line);padding:28px 18px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  @media (max-width:880px){.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line);padding:20px 16px;}}
+  .brand{display:flex;align-items:center;gap:12px;padding:0 6px;}
+  .brand-badge{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--violet));display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .brand svg{flex-shrink:0;}
+  .brand-text{line-height:1.15;}
+  .brand-text .k1{display:block;font-family:'Baloo 2',sans-serif;font-size:16.5px;font-weight:600;color:var(--ink);}
+  .brand-text .k2{display:block;font-size:11px;color:var(--ink-faint);margin-top:2px;letter-spacing:.02em;}
+  nav.tabs{display:flex;flex-direction:column;gap:3px;}
+  .tab-btn{display:flex;align-items:center;gap:10px;text-align:left;background:none;border:none;padding:10px 12px;border-radius:10px;color:var(--ink-soft);font-size:14px;font-weight:500;cursor:pointer;transition:background .15s ease,color .15s ease;}
+  .tab-btn .num{font-family:'Poppins',sans-serif;letter-spacing:.02em;font-size:10.5px;color:var(--ink-faint);width:18px;}
+  .tab-btn:hover{background:var(--paper-soft);color:var(--ink);}
+  .tab-btn{border-radius:999px;}
+  .tab-btn.active{background:var(--teal);color:#fff;}
+  .tab-btn.active .num{color:rgba(255,255,255,.7);}
+  .lang-switch{display:flex;gap:6px;padding:0 6px;}
+  .lang-btn{flex:1;padding:7px;border-radius:8px;border:1px solid var(--line);background:var(--paper);font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-soft);}
+  .lang-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .plan-badge{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--gold-soft);color:#8a3f22;margin-top:4px;}
+  .plan-badge.premium{background:var(--teal-soft);color:var(--teal);}
+  .sidebar-foot{margin-top:auto;padding:14px 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-faint);line-height:1.5;}
+  .user-chip{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .logout-btn,.save-link-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:11px;text-decoration:underline;}
+
+  main{padding:36px 44px 80px;max-width:980px;}
+  @media (max-width:880px){main{padding:24px 18px 60px;}}
+  .hero{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:34px;padding-bottom:26px;border-bottom:1px solid var(--line);}
+  .hero-text .eyebrow{font-family:'Poppins',sans-serif;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);
+    display:inline-flex;align-items:center;gap:8px;background:var(--teal-soft);padding:6px 14px 6px 9px;border-radius:999px;margin:0 0 10px;}
+  .hero-text .eyebrow::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block;}
+  .hero-text h1{font-size:28px;margin:0 0 6px;color:var(--ink);}
+  .hero-text p{margin:0;color:var(--ink-soft);font-size:14px;max-width:46ch;}
+  .door-widget{flex-shrink:0;text-align:center;}
+  .door-widget .pct{font-family:'Poppins',sans-serif;letter-spacing:.02em;font-size:11px;color:var(--ink-faint);margin-top:6px;}
+  section.panel{display:none;}
+  section.panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .panel-head{margin-bottom:22px;}
+  .panel-head .eyebrow{font-family:'Poppins',sans-serif;letter-spacing:.08em;font-size:10.5px;font-weight:700;
+    color:var(--accent,var(--teal));text-transform:uppercase;margin:0 0 10px;
+    display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft,var(--teal-soft));
+    padding:6px 14px 6px 9px;border-radius:999px;}
+  .panel-head .eyebrow::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent,var(--teal));display:inline-block;}
+  .panel-head h2{font-size:22px;margin:0 0 8px;}
+  .panel-head .lead{color:var(--ink-soft);font-size:14.5px;max-width:64ch;line-height:1.55;margin:0;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:30px;}
+  @media (max-width:720px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .stat .n{font-family:'Baloo 2',sans-serif;font-size:30px;font-weight:500;color:var(--teal);line-height:1;}
+  .stat .l{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .card h3{font-size:15.5px;margin:0 0 4px;}
+  .card .sub{font-size:12.5px;color:var(--ink-faint);margin:0 0 14px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:720px){.two-col{grid-template-columns:1fr;}}
+  .col-strength{border-top:3px solid var(--teal);}
+  .col-gap{border-top:3px solid var(--gold);}
+  .item-row{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .item-row:last-of-type{border-bottom:none;}
+  .item-row .dot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+  .col-strength .dot{background:var(--teal);}
+  .col-gap .dot{background:var(--gold);}
+  .item-row span{flex:1;line-height:1.4;}
+  .item-row button{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:14px;padding:0 4px;line-height:1;opacity:.5;}
+  .item-row button:hover{opacity:1;color:var(--clay);}
+  .add-row{display:flex;gap:8px;margin-top:12px;}
+  .add-row input{flex:1;}
+  .gap-hint{font-size:11.5px;color:var(--ink-faint);margin-top:10px;background:var(--gold-soft);padding:8px 10px;border-radius:8px;line-height:1.5;}
+  .gap-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;background:var(--paper);}
+  .gap-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .gap-card-top .gap-text{flex:1;font-weight:500;}
+  .gap-card-top .gap-remove{background:none;border:none;cursor:pointer;font-size:14px;opacity:.4;}
+  .gap-card-top .gap-remove:hover{opacity:1;color:var(--clay);}
+  .gap-card-row{display:flex;gap:8px;margin-bottom:8px;}
+  .gap-select{flex:1;}
+  .gap-date{width:130px;}
+  .gap-accion{width:100%;margin-bottom:10px;}
+  .gap-ai-btn{width:100%;background:var(--gold-soft);color:var(--teal);border:1px solid var(--gold);font-weight:600;font-size:12.5px;padding:9px;border-radius:999px;cursor:pointer;}
+  .gap-ai-btn:hover{background:var(--gold);color:#fff;}
+  .gap-ai-btn:disabled{opacity:.6;cursor:default;}
+  .gap-recursos{margin-top:9px;display:flex;flex-direction:column;gap:5px;}
+  .gap-recursos a{font-size:12.5px;color:var(--teal);text-decoration:underline;}
+  .entrevista-progress{font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-soft);display:inline-block;padding:5px 12px;border-radius:999px;margin-bottom:12px;}
+  .entrevista-grupo{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;background:var(--paper);}
+  .entrevista-grupo summary{cursor:pointer;list-style:none;padding:13px 16px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:14.5px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;}
+  .entrevista-grupo summary::-webkit-details-marker{display:none;}
+  .entrevista-grupo summary::after{content:'▾';font-size:12px;color:var(--ink-faint);margin-left:8px;}
+  .entrevista-grupo[open] summary::after{content:'▴';}
+  .entrevista-grupo-count{font-size:11px;font-weight:600;color:var(--teal);background:var(--teal-soft);padding:2px 9px;border-radius:999px;}
+  .entrevista-item{padding:12px 16px;border-top:1px solid var(--line);}
+  .entrevista-item.done{background:var(--gold-soft);}
+  .entrevista-pregunta{font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:5px;}
+  .entrevista-guia{font-size:12.5px;color:var(--ink-faint);line-height:1.55;margin-bottom:9px;}
+  .entrevista-check-btn{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:11.5px;font-weight:600;color:var(--ink);cursor:pointer;}
+  .entrevista-item.done .entrevista-check-btn{background:var(--gold);color:#fff;border-color:var(--gold);}
+  .entrevista-speech{width:100%;min-height:64px;resize:vertical;font-family:'Poppins',sans-serif;font-size:12.5px;line-height:1.5;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);margin-bottom:9px;}
+  .entrevista-record-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px;}
+  .entrevista-record-btn{background:var(--teal-soft);color:var(--teal);border:1px solid var(--teal);border-radius:999px;padding:6px 14px;font-size:11.5px;font-weight:700;cursor:pointer;}
+  .entrevista-record-btn:hover{background:var(--teal);color:#fff;}
+  .entrevista-audio-wrap audio{height:32px;max-width:220px;}
+  .semana-badge{display:inline-block;font-size:12px;font-weight:700;color:var(--accent, var(--teal));background:var(--accent-soft, var(--teal-soft));padding:5px 12px;border-radius:999px;margin-top:8px;}
+  .historial-semana{padding:10px 0;border-bottom:1px solid var(--line);}
+  .historial-semana:last-of-type{border-bottom:none;}
+  .historial-semana.en-curso .historial-semana-num{color:var(--teal);}
+  .historial-semana-num{font-weight:700;font-size:13px;margin-bottom:3px;}
+  .historial-semana-detalle{font-size:12px;color:var(--ink-faint);}
+  .historial-total{margin-top:10px;padding-top:10px;border-top:2px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink);}
+  .buscador-form{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+  .buscador-form .save-field{flex:1;min-width:200px;margin-bottom:0;}
+  .buscador-sitios{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px;}
+  .sitio-chip{display:flex;align-items:center;gap:7px;background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;user-select:none;}
+  .sitio-chip input{margin:0;accent-color:var(--gold);cursor:pointer;}
+  .sitio-chip.checked{border-color:var(--gold);background:var(--gold-soft);}
+  .buscador-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .buscador-hint{font-size:11.5px;color:var(--ink-faint);background:var(--teal-soft);padding:8px 10px;border-radius:8px;line-height:1.5;}
+  input[type=text],input[type=date],input[type=number],select,textarea{font-family:'Poppins',sans-serif;font-size:13.5px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--teal);background:#fff;}
+  button.btn{font-weight:500;font-size:13px;background:var(--teal);color:#fff;border:none;padding:10px 20px;border-radius:999px;cursor:pointer;transition:opacity .15s,transform .15s;white-space:nowrap;letter-spacing:.02em;}
+  button.btn:hover{opacity:.9;transform:translateY(-1px);}
+  button.btn.ghost{background:none;color:var(--teal);border:1px solid var(--teal);}
+  button.btn.gold{background:var(--gold);}
+  .goal-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;}
+  .goal-name{font-size:14px;font-weight:600;}
+  .goal-name small{display:block;font-weight:400;color:var(--ink-faint);font-size:11.5px;margin-top:2px;}
+  .goal-controls{display:flex;align-items:center;gap:10px;}
+  .goal-controls .count{font-family:'Poppins',sans-serif;letter-spacing:.02em;font-size:16px;width:70px;text-align:center;}
+  .step-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:15px;line-height:1;color:var(--ink);}
+  .step-btn:hover{background:var(--paper-soft);}
+  .bar-track{height:7px;border-radius:6px;background:var(--paper-soft);overflow:hidden;margin-top:10px;}
+  .bar-fill{height:100%;background:var(--teal);border-radius:6px;transition:width .3s ease;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-family:'Poppins',sans-serif;letter-spacing:.02em;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);padding:8px 10px;border-bottom:1px solid var(--line);}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td input,td select{width:100%;border-color:transparent;background:transparent;padding:6px 6px;}
+  td input:hover,td select:hover{background:var(--paper-soft);border-color:var(--line);}
+  .status-pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .st-Por-enviar,.st-To-send{background:var(--paper-soft);color:var(--ink-soft);}
+  .st-Enviada,.st-Sent{background:var(--teal-soft);color:var(--teal);}
+  .st-Seguimiento,.st-Follow-up{background:var(--gold-soft);color:#8a3f22;}
+  .st-Entrevista,.st-Interview{background:#DCE7F5;color:#2E5C99;}
+  .st-Oferta,.st-Offer{background:#DFF0D8;color:#2F7A3B;}
+  .st-No{background:var(--clay-soft);color:var(--clay);}
+  .row-actions button{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:15px;}
+  .row-actions button:hover{color:var(--clay);}
+  .table-scroll{overflow-x:auto;}
+  #appsTable{table-layout:fixed;min-width:920px;}
+  #appsTable th:nth-child(1),#appsTable td:nth-child(1){width:180px;}
+  #appsTable th:nth-child(2),#appsTable td:nth-child(2){width:200px;}
+  #appsTable th:nth-child(3),#appsTable td:nth-child(3){width:118px;}
+  #appsTable th:nth-child(4),#appsTable td:nth-child(4){width:130px;}
+  #appsTable th:nth-child(5),#appsTable td:nth-child(5){width:140px;}
+  #appsTable th:nth-child(6),#appsTable td:nth-child(6){width:118px;}
+  #appsTable th:nth-child(7),#appsTable td:nth-child(7){width:200px;}
+  #appsTable th:nth-child(8),#appsTable td:nth-child(8){width:34px;}
+  #appsTable td input,#appsTable td select{white-space:nowrap;}
+  .apps-view-toggle{display:flex;gap:8px;margin-bottom:16px;}
+  .view-toggle-btn{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:12.5px;font-weight:600;color:var(--ink-faint);cursor:pointer;}
+  .view-toggle-btn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .calendar-nav{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:14px;}
+  .calendar-nav button{background:var(--paper);border:1px solid var(--line);border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--ink);}
+  .calendar-nav button:hover{background:var(--teal-soft);}
+  #calendarMonthLabel{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:15px;min-width:150px;text-align:center;text-transform:capitalize;}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-weekday{font-size:10.5px;font-weight:700;text-align:center;color:var(--ink-faint);padding:4px 0;text-transform:uppercase;}
+  .cal-cell{position:relative;min-height:58px;border:1px solid var(--line);border-radius:9px;padding:6px;background:var(--paper);}
+  .cal-cell.empty{background:transparent;border:none;}
+  .cal-cell.has-apps{border-color:var(--teal);cursor:pointer;}
+  .cal-daynum{font-size:11px;color:var(--ink-faint);}
+  .cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
+  .cal-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);}
+  .cal-more{font-size:9px;color:var(--teal);font-weight:700;}
+  .cal-tooltip{display:none;position:absolute;z-index:30;top:100%;left:0;margin-top:5px;background:var(--deep);color:#fff;border-radius:10px;padding:10px;min-width:210px;max-width:270px;box-shadow:var(--shadow);}
+  .cal-cell.has-apps:hover .cal-tooltip{display:block;}
+  .cal-tooltip-item{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:11.5px;line-height:1.4;}
+  .cal-tooltip-item:last-child{border-bottom:none;}
+  .cal-tooltip-item strong{display:block;font-size:12px;}
+  .cal-tooltip-empresa{opacity:.85;}
+  .cal-tooltip-status{display:inline-block;margin-top:3px;font-size:10px;background:rgba(255,255,255,0.18);padding:2px 7px;border-radius:999px;}
+  .add-bar{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:14px;}
+  .cv-tips-list{margin:0;padding:0;list-style:none;}
+  .cv-tips-list li{position:relative;padding:10px 0 10px 22px;font-size:13.5px;line-height:1.55;color:var(--ink);border-bottom:1px solid var(--line);}
+  .cv-tips-list li:last-child{border-bottom:none;}
+  .cv-tips-list li::before{content:'';position:absolute;left:0;top:18px;width:7px;height:7px;border-radius:50%;background:var(--accent, var(--teal));}
+  .quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:720px){.quote-grid{grid-template-columns:1fr;}}
+  .quote-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px;position:relative;}
+  .quote-card::before{content:'"';font-family:'Baloo 2',sans-serif;font-size:40px;color:var(--gold-soft);position:absolute;top:6px;left:14px;line-height:1;}
+  .quote-card p{font-family:'Baloo 2',sans-serif;font-style:italic;font-size:15px;line-height:1.5;margin:14px 0 0;color:var(--ink);}
+  .empty{font-size:13px;color:var(--ink-faint);padding:14px 0;text-align:center;}
+  .save-note{font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;}
+  .save-note .dotlive{width:6px;height:6px;border-radius:50%;background:var(--teal);}
+  .save-note.saving .dotlive{background:var(--gold);}
+  .save-note.error .dotlive{background:var(--clay);}
+
+  /* ============ RESPONSIVO: TABLET Y MÓVIL ============
+     El navegador aplica esto automáticamente según el ancho real de
+     pantalla — así se "detecta" PC, tablet o celular sin adivinar el
+     tipo de aparato, que es lo confiable (una tablet en horizontal se
+     ve como PC; un celular grande en vertical se ve como celular). */
+
+  /* --- Tablet en horizontal / laptops pequeñas --- */
+  @media (max-width:1024px){
+    .shell{grid-template-columns:214px 1fr;}
+    main{max-width:100%;}
+  }
+
+  /* --- Tablet en vertical --- */
+  @media (max-width:880px){
+    nav.tabs{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:6px;-webkit-overflow-scrolling:touch;}
+    nav.tabs::-webkit-scrollbar{height:4px;}
+    nav.tabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+    .tab-btn{flex-shrink:0;white-space:nowrap;}
+    .sidebar{gap:14px;}
+    .lang-switch{max-width:170px;}
+    .hero{flex-wrap:wrap;justify-content:center;text-align:center;padding-bottom:20px;}
+    .hero-text p{margin-left:auto;margin-right:auto;}
+    .door-widget{margin:0 auto;}
+  }
+
+  /* --- Celulares grandes y medianos --- */
+  @media (max-width:600px){
+    main{padding:20px 14px 60px;}
+    .card{padding:18px 16px;}
+    .save-card{padding:24px 18px;width:calc(100% - 20px);}
+    .panel-head h2{font-size:19px;}
+    .hero-text h1{font-size:21px;}
+    .stat-grid{gap:10px;}
+    .stat{padding:13px 14px;}
+    .stat .n{font-size:24px;}
+    .goal-card{flex-wrap:wrap;padding:14px 16px;}
+    .goal-controls{width:100%;justify-content:space-between;}
+    .buscador-form .save-field{min-width:0;flex:1 1 100%;}
+    .save-row2{display:flex;flex-direction:column;}
+    .gap-card-row{flex-wrap:wrap;}
+    .gap-date{width:100%;}
+    .entrevista-record-row{flex-direction:column;align-items:flex-start;}
+    table:not(#appsTable){font-size:12px;}
+  }
+
+  /* --- Celulares pequeños --- */
+  @media (max-width:400px){
+    .calendar-grid{gap:3px;}
+    .cal-cell{min-height:44px;padding:4px;border-radius:7px;}
+    .cal-daynum{font-size:9.5px;}
+    .cal-dot{width:5px;height:5px;}
+    .portada-geo{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);gap:5px;}
+    .portada-cell{width:46px;height:46px;border-radius:12px;}
+    .portada-door-svg{width:32px;height:32px;}
+    .geo-hero{width:120px;height:80px;}
+    .brand-text .k1{font-size:15px;}
+    .sitio-chip{padding:7px 11px;font-size:12px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= PORTADA ================= -->
+<div id="portada">
+  <div class="portada-geo">
+    <div class="portada-cell c1"><div class="portada-ring"></div></div>
+    <div class="portada-cell c2"><div class="portada-quart"></div></div>
+    <div class="portada-cell c3 portada-door-cell">
+      <svg viewBox="0 0 60 60" class="portada-door-svg">
+        <rect x="14" y="10" width="32" height="42" rx="3" fill="var(--teal-soft)"/>
+        <g id="portadaDoorGroup">
+          <rect x="16" y="12" width="26" height="38" rx="2" fill="var(--violet)"/>
+          <circle cx="38" cy="31" r="1.6" fill="#fff"/>
+        </g>
+      </svg>
+    </div>
+    <div class="portada-cell c4 portada-dot"></div>
+    <div class="portada-cell c5"><div class="portada-quart portada-quart-flip"></div></div>
+    <div class="portada-cell c6"><div class="portada-ring portada-ring-sm"></div></div>
+  </div>
+  <div class="portada-content">
+    <p class="portada-eyebrow" data-i18n="brandName">Puertas</p>
+    <h1 data-i18n="portadaHeadline">Cuando no hay trabajo, buscar trabajo se vuelve el trabajo.</h1>
+    <p class="portada-sub" data-i18n="portadaSub">Aquí es donde organizas cada puerta que tocas, hasta que una se abra.</p>
+    <button class="portada-btn" onclick="hidePortada()" data-i18n="portadaBtn">Comenzar</button>
+  </div>
+</div>
+
+<!-- ================= APP (siempre visible, sin gate) ================= -->
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-badge">
+        <svg width="16" height="16" viewBox="0 0 30 30" fill="none">
+          <rect x="6" y="3" width="16" height="24" rx="4" fill="#fff"/>
+          <circle cx="17" cy="15" r="1.6" fill="var(--teal)"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="k1" data-i18n="brandName">Puertas</span>
+        <span class="k2" data-i18n="brandTag">Organizador de búsqueda</span>
+      </div>
+    </div>
+
+    <div class="lang-switch">
+      <button class="lang-btn" id="mainLangEs" onclick="setLang('es')">ES</button>
+      <button class="lang-btn" id="mainLangEn" onclick="setLang('en')">EN</button>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab-btn active" data-panel="resumen"><span class="num">01</span><span data-i18n="navResumen">Resumen</span></button>
+      <button class="tab-btn" data-panel="inventario"><span class="num">02</span><span data-i18n="navInventario">Inventario honesto</span></button>
+      <button class="tab-btn" data-panel="metas"><span class="num">03</span><span data-i18n="navMetas">Metas de la semana</span></button>
+      <button class="tab-btn" data-panel="buscador"><span class="num">04</span><span data-i18n="navBuscador">Buscar vacantes</span></button>
+      <button class="tab-btn" data-panel="solicitudes"><span class="num">05</span><span data-i18n="navSolicitudes">Solicitudes</span></button>
+      <button class="tab-btn" data-panel="contactos"><span class="num">06</span><span data-i18n="navContactos">Red de contactos</span></button>
+      <button class="tab-btn" data-panel="curriculum"><span class="num">07</span><span data-i18n="navCurriculum">Currículum y entrevista</span></button>
+      <button class="tab-btn" data-panel="frases"><span class="num">08</span><span data-i18n="navFrases">Frases para sostenerse</span></button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div>
+          <div id="userEmailDisplay" style="color:var(--ink);font-weight:600;font-size:12px;" data-i18n="guestLabel">Modo invitado</div>
+          <span class="plan-badge" id="planBadge" data-i18n="guestBadge">Sin guardar</span>
+        </div>
+        <button class="logout-btn" id="logoutBtn" onclick="handleLogout()" style="display:none;" data-i18n="logoutBtn">Salir</button>
+        <button class="save-link-btn" id="saveLinkBtn" onclick="openSaveModal()" data-i18n="saveLinkBtn">Guardar</button>
+      </div>
+      <div class="save-note" id="saveNote" style="margin-top:10px;"><span class="dotlive"></span><span id="saveNoteText" data-i18n="localSave">Guardado en este navegador</span></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div class="hero-text">
+        <p class="eyebrow" id="dayCounterText">Día 1</p>
+        <h1 data-i18n="heroTitle">Cuando una puerta se cierra</h1>
+        <p data-i18n="heroSub">Aquí llevas orden de tu inventario, tus metas, tus solicitudes y tu red — mientras tocar puertas es el trabajo del día.</p>
+      </div>
+      <div class="door-widget">
+        <div class="geo-hero">
+          <div class="geo-cell c-purple"><div class="ring tl"></div></div>
+          <div class="geo-cell c-turq"><div class="quart br" style="background:var(--deep);"></div></div>
+          <div class="geo-cell c-deep"><div class="dotwhite"></div></div>
+          <div class="geo-cell c-photo">
+            <svg width="34" height="46" viewBox="0 0 70 86" fill="none">
+              <rect x="1" y="1" width="68" height="84" rx="10" fill="#2E1F6B"/>
+              <g id="doorGroup" style="transform-origin: 12px 8px;">
+                <rect x="10" y="7" width="50" height="72" rx="6" fill="var(--gold)"/>
+                <circle cx="53" cy="43" r="2.5" fill="#fff"/>
+              </g>
+            </svg>
+          </div>
+          <div class="geo-cell c-turq"><div class="quart tl2"></div></div>
+          <div class="geo-cell c-purple"><div class="dotwhite" style="background:var(--gold);"></div></div>
+        </div>
+        <div class="pct" id="doorPct">0%</div>
+      </div>
+    </div>
+
+    <!-- ===== RESUMEN ===== -->
+    <section class="panel active" id="resumen">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="resumenEyebrow">Panorama</p>
+        <h2 data-i18n="resumenTitle">Lo que llevas hasta hoy</h2>
+        <p class="lead" data-i18n="resumenLead">Un día con tareas cumplidas —aunque no haya resultado todavía— es un día en que conservas el control de algo.</p>
+      </div>
+
+      <div class="guest-banner" id="guestBanner" style="display:none;">
+        <div>
+          <h3 data-i18n="guestBannerTitle">Tu progreso vive solo en este navegador</h3>
+          <p data-i18n="guestBannerBody">Si cambias de dispositivo o borras el caché, lo pierdes. Guárdalo con tu cuenta.</p>
+        </div>
+        <button onclick="openSaveModal()" data-i18n="guestBannerBtn">Guardar mi progreso</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><div class="n" id="statDias">0</div><div class="l" data-i18n="statDiasLabel">Días buscando</div></div>
+        <div class="stat"><div class="n" id="statEnviadas">0</div><div class="l" data-i18n="statEnviadasLabel">Solicitudes enviadas</div></div>
+        <div class="stat"><div class="n" id="statEntrevistas">0</div><div class="l" data-i18n="statEntrevistasLabel">Entrevistas conseguidas</div></div>
+        <div class="stat"><div class="n" id="statContactos">0</div><div class="l" data-i18n="statContactosLabel">Contactos en tu red</div></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="metaWeekTitle">Meta de esta semana</h3>
+        <p class="sub" data-i18n="metaWeekSub">Ajusta las metas en la pestaña "Metas de la semana".</p>
+        <div id="resumenGoals"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="historialTitle">Historial semanal</h3>
+        <p class="sub" data-i18n="historialSub">Cada semana se cierra sola y queda registrada aquí — no necesitas reiniciar nada.</p>
+        <div id="resumenHistorial"></div>
+      </div>
+      <div class="card">
+        <h3 data-i18n="reminderTitle">Recordatorio</h3>
+        <p style="font-size:13.5px;line-height:1.6;margin:0;" data-i18n="reminderBody">Una empresa que cierra no es un veredicto sobre quienes trabajaban en ella. El oficio no se cerró. La experiencia no se cerró. Lo único que se cerró fue una razón social.</p>
+      </div>
+    </section>
+
+    <!-- ===== INVENTARIO ===== -->
+    <section class="panel" id="inventario">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="invEyebrow">Paso 1 — antes de tocar puertas</p>
+        <h2 data-i18n="invTitle">Inventario honesto</h2>
+        <p class="lead" data-i18n="invLead">No es un currículum, es un inventario. Una carencia identificada deja de ser una debilidad y se convierte en una tarea.</p>
+      </div>
+      <div class="two-col">
+        <div class="card col-strength">
+          <h3 data-i18n="strengthsTitle">Fortalezas</h3>
+          <p class="sub" data-i18n="strengthsSub">Oficio, problemas resueltos, capital acumulado.</p>
+          <div id="strengthList"></div>
+          <div class="add-row">
+            <input type="text" id="strengthInput" data-i18n-ph="strengthPh" placeholder="Ej. Manejo de proveedores y producción...">
+            <button class="btn" onclick="addItem('strengths','strengthInput')" data-i18n="addBtn">Agregar</button>
+          </div>
+        </div>
+        <div class="card col-gap">
+          <h3 data-i18n="gapsTitle">Carencias → tareas</h3>
+          <p class="sub" data-i18n="gapsSub">Lo que falta, convertido en algo que se puede hacer.</p>
+          <div id="gapList"></div>
+          <div class="add-row">
+            <input type="text" id="gapInput" data-i18n-ph="gapPh" placeholder="Ej. Inglés técnico, cierta certificación...">
+            <button class="btn gold" onclick="addGap()" data-i18n="addBtn">Agregar</button>
+          </div>
+          <div class="gap-hint" data-i18n="gapHint">El tiempo sin empleo es tiempo disponible para cerrar exactamente estos huecos.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== METAS ===== -->
+    <section class="panel" id="metas">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="metasEyebrow">Paso 2 — tratarlo como un trabajo</p>
+        <h2 data-i18n="metasTitle">Metas de la semana</h2>
+        <p class="lead" data-i18n="metasLead">Fija un número semanal y cúmplelo aunque no haya ánimo.</p>
+        <p class="semana-badge" id="metasSemanaLabel"></p>
+      </div>
+      <div id="goalsContainer"></div>
+    </section>
+
+    <!-- ===== BUSCADOR ===== -->
+    <section class="panel" id="buscador">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="buscadorEyebrow">Toca varias puertas a la vez</p>
+        <h2 data-i18n="buscadorTitle">Buscar vacantes</h2>
+        <p class="lead" data-i18n="buscadorLead">Escribe el puesto una sola vez y ábrelo en todas las bolsas de trabajo al mismo tiempo.</p>
+      </div>
+      <div class="card">
+        <div class="buscador-form">
+          <div class="save-field">
+            <label data-i18n="buscadorPuestoLabel">Puesto</label>
+            <input type="text" id="buscadorPuesto" data-i18n-ph="buscadorPuestoPh" placeholder="Ej. Gerente de producción">
+          </div>
+          <div class="save-field">
+            <label data-i18n="buscadorCiudadLabel">Ciudad (opcional)</label>
+            <input type="text" id="buscadorCiudad" data-i18n-ph="buscadorCiudadPh" placeholder="Ej. Guadalajara, Jalisco">
+          </div>
+        </div>
+        <div class="buscador-sitios" id="buscadorSitios"></div>
+        <div class="buscador-actions">
+          <button class="btn" onclick="buscarEnTodos()" data-i18n="buscadorBtnTodos">Buscar en todas</button>
+          <button class="btn ghost" onclick="toggleTodosSitios()" data-i18n="buscadorBtnToggle">Marcar / desmarcar todas</button>
+        </div>
+        <div class="buscador-hint" data-i18n="buscadorHint">Se abre una pestaña nueva por cada sitio marcado, ya con tu búsqueda lista.</div>
+      </div>
+    </section>
+
+    <!-- ===== SOLICITUDES ===== -->
+    <section class="panel" id="solicitudes">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="appsEyebrow">Paso 3 — el currículum es una propuesta</p>
+        <h2 data-i18n="appsTitle">Seguimiento de solicitudes</h2>
+        <p class="lead" data-i18n="appsLead">Cada "no" solo significa que ésa no era.</p>
+      </div>
+      <div class="card">
+        <div class="apps-view-toggle">
+          <button class="view-toggle-btn active" id="viewBtnTabla" onclick="setAppsView('tabla')" data-i18n="viewTablaBtn">📋 Tabla</button>
+          <button class="view-toggle-btn" id="viewBtnCalendario" onclick="setAppsView('calendario')" data-i18n="viewCalendarioBtn">📅 Calendario</button>
+        </div>
+        <div id="appsTableWrap">
+          <div class="table-scroll">
+            <table id="appsTable">
+              <thead><tr>
+                <th data-i18n="thEmpresa">Empresa</th><th data-i18n="thPuesto">Puesto</th><th data-i18n="thFecha">Fecha</th>
+                <th data-i18n="thContacto">Contacto</th><th data-i18n="thEstatus">Estatus</th><th data-i18n="thSeguimiento">Seguimiento</th>
+                <th data-i18n="thNotas">Notas</th><th></th>
+              </tr></thead>
+              <tbody id="appsBody"></tbody>
+            </table>
+          </div>
+          <div id="appsEmpty" class="empty" data-i18n="appsEmpty">Aún no registras solicitudes.</div>
+        </div>
+        <div id="appsCalendarWrap" style="display:none;">
+          <div class="calendar-nav">
+            <button onclick="calendarMonthShift(-1)">‹</button>
+            <span id="calendarMonthLabel"></span>
+            <button onclick="calendarMonthShift(1)">›</button>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+        <div class="add-bar"><button class="btn" onclick="addApplication()" data-i18n="newAppBtn">+ Nueva solicitud</button>
+          <button class="btn ghost" id="importAppsBtn" onclick="importarSolicitudesCapturas()" data-i18n="importAppsBtn">Importar solicitudes de mis capturas</button>
+          <button class="btn ghost" id="importInboxBtn" onclick="importarSolicitudesInbox()" data-i18n="importInboxBtn">Actualizar con mis correos (16 confirmadas)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONTACTOS ===== -->
+    <section class="panel" id="contactos">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="contactsEyebrow">Paso 4 — la red vale más que el portal</p>
+        <h2 data-i18n="contactsTitle">Red de contactos</h2>
+        <p class="lead" data-i18n="contactsLead">Reactivar contactos no es pedir favores.</p>
+      </div>
+      <div class="card">
+        <div class="table-scroll">
+          <table id="contactsTable">
+            <thead><tr><th data-i18n="thNombre">Nombre</th><th data-i18n="thRelacion">Relación</th><th data-i18n="thEstatus">Estatus</th><th data-i18n="thNotas">Notas</th><th></th></tr></thead>
+            <tbody id="contactsBody"></tbody>
+          </table>
+        </div>
+        <div id="contactsEmpty" class="empty" data-i18n="contactsEmpty">Aún no agregas contactos.</div>
+        <div class="add-bar"><button class="btn" onclick="addContact()" data-i18n="newContactBtn">+ Nuevo contacto</button>
+          <button class="btn ghost" id="importContactsBtn" onclick="importarContactosRed()" data-i18n="importContactsBtn">Importar mis contactos de LinkedIn/Facebook</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CURRICULUM ===== -->
+    <section class="panel" id="curriculum">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="cvEyebrow">Preparación</p>
+        <h2 data-i18n="cvTitle">Currículum y entrevista</h2>
+        <p class="lead" data-i18n="cvLead">El talento no habla solo. Hay que prestarle voz.</p>
+      </div>
+      <div class="card">
+        <h3 data-i18n="cvTipsTitle">Cómo estructurar tu CV hoy en día</h3>
+        <ul class="cv-tips-list" id="cvTipsList"></ul>
+      </div>
+      <div class="card">
+        <h3 data-i18n="entrevistaBancoTitle">Prepárate para la entrevista</h3>
+        <p class="sub" data-i18n="entrevistaBancoSub">Domina la historia de tu propio currículum, pero no llegues en blanco a lo básico. Escribe tu respuesta, grábate diciéndola en voz alta, escúchate las veces que haga falta — y cuando te sientas listo, marca la pregunta como practicada. No estás solo en esto.</p>
+        <div class="entrevista-progress" id="entrevistaProgress"></div>
+        <div id="entrevistaBanco"></div>
+      </div>
+    </section>
+
+    <!-- ===== FRASES ===== -->
+    <section class="panel" id="frases">
+      <div class="panel-head">
+        <p class="eyebrow" data-i18n="quotesEyebrow">Para los días difíciles</p>
+        <h2 data-i18n="quotesTitle">Frases para sostenerse</h2>
+        <p class="lead" data-i18n="quotesLead">La dignidad de una persona no la otorga su empleo.</p>
+      </div>
+      <div class="quote-grid" id="quoteGrid"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= SAVE / REGISTER + PAY MODAL ================= -->
+<div id="saveOverlay">
+  <div class="save-card">
+    <button class="save-card-close" onclick="closeSaveModal()">✕</button>
+    <div class="save-brand">
+      <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
+        <rect x="6" y="3" width="16" height="24" rx="1.5" fill="#3E6B5C"/>
+        <circle cx="19" cy="15" r="1.4" fill="#F3F4EF"/>
+        <rect x="22" y="3" width="2" height="24" fill="#C69A3D"/>
+      </svg>
+      <div class="k1" data-i18n="modalBrand">Guarda tu progreso</div>
+    </div>
+    <p class="save-pitch" data-i18n="modalPitch">Ya cargaste información valiosa. Crea tu cuenta para no perderla y elige tú cuánto vale esta herramienta para ti.</p>
+
+    <div class="save-tabs">
+      <button class="save-tab active" id="tabRegisterPay" onclick="setSaveMode('registerpay')" data-i18n="tabRegisterPay">Guardar y apoyar</button>
+      <button class="save-tab" id="tabLoginModal" onclick="setSaveMode('login')" data-i18n="tabLoginModal">Ya tengo cuenta</button>
+    </div>
+
+    <div class="save-error" id="saveError"></div>
+    <div class="save-msg" id="saveMsg"></div>
+
+    <!-- REGISTER + PAY -->
+    <form id="registerPayForm" onsubmit="return handleRegisterAndPay(event)">
+      <div class="save-field">
+        <label data-i18n="nameLabel">Nombre</label>
+        <input type="text" id="rpName" required>
+      </div>
+      <div class="save-field">
+        <label data-i18n="emailLabel">Correo</label>
+        <input type="email" id="rpEmail" required>
+      </div>
+      <div class="save-field">
+        <label data-i18n="passwordLabel">Contraseña</label>
+        <input type="password" id="rpPassword" minlength="8" required>
+      </div>
+
+      <div class="amount-block">
+        <div class="amount-label" data-i18n="amountLabel">Acceso completo</div>
+        <div class="fixed-price-tag">
+          <span class="cur">MXN $</span><span class="fixed-price-num">100</span><span class="fixed-price-suffix">único pago</span>
+        </div>
+        <div class="amount-hint" data-i18n="amountHint">Incluye guardado en la nube y búsquedas con inteligencia artificial para cerrar tus carencias.</div>
+      </div>
+
+      <div class="card-section-label" data-i18n="cardSectionLabel">Datos de tu tarjeta</div>
+      <div class="save-field">
+        <label data-i18n="cardNameLabel">Nombre en la tarjeta</label>
+        <input type="text" data-openpay-card="holder_name" id="cardHolder" required>
+      </div>
+      <div class="save-field">
+        <label data-i18n="cardNumberLabel">Número de tarjeta</label>
+        <input type="text" data-openpay-card="card_number" id="cardNumber" inputmode="numeric" required>
+      </div>
+      <div class="save-row2">
+        <div class="save-field">
+          <label data-i18n="cardExpLabel">Vence (MM/AA)</label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" data-openpay-card="expiration_month" id="cardExpMonth" placeholder="MM" maxlength="2" required>
+            <input type="text" data-openpay-card="expiration_year" id="cardExpYear" placeholder="AA" maxlength="2" required>
+          </div>
+        </div>
+        <div class="save-field">
+          <label data-i18n="cardCvvLabel">CVV</label>
+          <input type="text" data-openpay-card="cvv2" id="cardCvv" maxlength="4" required>
+        </div>
+      </div>
+
+      <button class="save-submit" type="submit" id="rpSubmitBtn" data-i18n="rpSubmitBtn">Guardar mi progreso y apoyar</button>
+      <div class="save-secure" data-i18n="secureNote">Pago procesado de forma segura. Tu tarjeta nunca toca nuestro servidor.</div>
+    </form>
+
+    <!-- LOGIN (para quien ya tiene cuenta) -->
+    <form id="loginModalForm" style="display:none;" onsubmit="return handleLoginModal(event)">
+      <div class="save-field">
+        <label data-i18n="emailLabel">Correo</label>
+        <input type="email" id="loginEmail" required>
+      </div>
+      <div class="save-field">
+        <label data-i18n="passwordLabel">Contraseña</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <button class="save-submit" type="submit" data-i18n="loginBtn">Entrar</button>
+      <button type="button" class="save-forgot" onclick="setSaveMode('forgot')" data-i18n="forgotLink">¿Olvidaste tu contraseña?</button>
+      <div class="save-secure" data-i18n="loginNote">Al iniciar sesión se carga tu información guardada — tu avance de invitado en este navegador no se sube automáticamente.</div>
+    </form>
+
+    <!-- FORGOT PASSWORD -->
+    <form id="forgotModalForm" style="display:none;" onsubmit="return handleForgotModal(event)">
+      <div class="save-field">
+        <label data-i18n="emailLabel">Correo</label>
+        <input type="email" id="forgotEmail" required>
+      </div>
+      <button class="save-submit" type="submit" data-i18n="sendLinkBtn">Enviar enlace de recuperación</button>
+      <button type="button" class="save-forgot" onclick="setSaveMode('login')" data-i18n="backToLogin">Volver a iniciar sesión</button>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const API_BASE = window.__API_BASE__ || '/api';
+const OPENPAY_ID = window.__OPENPAY_ID__ || 'TU_MERCHANT_ID';
+const OPENPAY_PUBLIC_KEY = window.__OPENPAY_PUBLIC_KEY__ || 'TU_LLAVE_PUBLICA';
+const OPENPAY_SANDBOX = window.__OPENPAY_SANDBOX__ !== false; // true por defecto, cambia a false en producción
+const ENGAGEMENT_THRESHOLD = 5; // suma de elementos cargados antes de sugerir guardar
+
+if (window.OpenPay) {
+  OpenPay.setId(OPENPAY_ID);
+  OpenPay.setApiKey(OPENPAY_PUBLIC_KEY);
+  OpenPay.setSandboxMode(OPENPAY_SANDBOX);
+}
+
+/* ================= I18N ================= */
+const T = {
+  es: {
+    brandName:'Puertas', brandTag:'Organizador de búsqueda',
+    portadaHeadline:'Cuando no hay trabajo, buscar trabajo se vuelve el trabajo.',
+    portadaSub:'Aquí es donde organizas cada puerta que tocas, hasta que una se abra.',
+    portadaBtn:'Comenzar',
+    guestLabel:'Modo invitado', guestBadge:'Sin guardar',
+    logoutBtn:'Salir', saveLinkBtn:'Guardar', localSave:'Guardado en este navegador',
+    savingNote:'Guardando…', savedLocalNote:'Guardado en este navegador', savedServerNote:'Guardado automático', errorNote:'No se pudo guardar',
+    heroTitle:'Cuando una puerta se cierra',
+    heroSub:'Aquí llevas orden de tu inventario, tus metas, tus solicitudes y tu red — mientras tocar puertas es el trabajo del día.',
+    navResumen:'Resumen', navInventario:'Inventario honesto', navMetas:'Metas de la semana',
+    navSolicitudes:'Solicitudes', navContactos:'Red de contactos', navCurriculum:'Currículum y entrevista', navFrases:'Frases para sostenerse',
+    resumenEyebrow:'Panorama', resumenTitle:'Lo que llevas hasta hoy',
+    resumenLead:'Un día con tareas cumplidas —aunque no haya resultado todavía— es un día en que conservas el control de algo.',
+    guestBannerTitle:'Tu progreso vive solo en este navegador', guestBannerBody:'Si cambias de dispositivo o borras el caché, lo pierdes. Guárdalo con tu cuenta.', guestBannerBtn:'Guardar mi progreso',
+    statDiasLabel:'Días buscando', statEnviadasLabel:'Solicitudes enviadas', statEntrevistasLabel:'Entrevistas conseguidas', statContactosLabel:'Contactos en tu red',
+    metaWeekTitle:'Meta de esta semana', metaWeekSub:'Ajusta las metas en la pestaña "Metas de la semana".',
+    reminderTitle:'Recordatorio', reminderBody:'Una empresa que cierra no es un veredicto sobre quienes trabajaban en ella. El oficio no se cerró. La experiencia no se cerró. Lo único que se cerró fue una razón social.',
+    invEyebrow:'Paso 1 — antes de tocar puertas', invTitle:'Inventario honesto',
+    invLead:'No es un currículum, es un inventario. Una carencia identificada deja de ser una debilidad y se convierte en una tarea.',
+    strengthsTitle:'Fortalezas', strengthsSub:'Oficio, problemas resueltos, capital acumulado.', strengthPh:'Ej. Manejo de proveedores y producción...',
+    gapsTitle:'Carencias → tareas', gapsSub:'Lo que falta, convertido en algo que se puede hacer.', gapPh:'Ej. Inglés técnico, cierta certificación...',
+    gapHint:'El tiempo sin empleo es tiempo disponible para cerrar exactamente estos huecos.', addBtn:'Agregar',
+    strengthEmpty:'Agrega tu primera fortaleza.', gapEmpty:'Agrega tu primera carencia — se convierte en tarea.',
+    gapEstado_pendiente:'Pendiente', gapEstado_progreso:'En progreso', gapEstado_resuelta:'Resuelta',
+    gapAccionPh:'¿Qué acción concreta vas a tomar?',
+    gapAiBtn:'Buscar cómo mejorar esto', gapAiBtnLoading:'Buscando recursos...', gapAiBtnError:'No se pudo buscar, intenta de nuevo',
+    metasEyebrow:'Paso 2 — tratarlo como un trabajo', metasTitle:'Metas de la semana', metasLead:'Fija un número semanal y cúmplelo aunque no haya ánimo.',
+    metasSemanaActual:'Semana {n} en curso',
+    historialTitle:'Historial semanal', historialSub:'Cada semana se cierra sola y queda registrada aquí — no necesitas reiniciar nada.',
+    historialSemanaLabel:'Semana {n}', historialEnCursoLabel:'en curso', historialTotalLabel:'Total acumulado', historialEmpty:'Todavía no se ha cerrado ninguna semana.',
+    navBuscador:'Buscar vacantes',
+    buscadorEyebrow:'Toca varias puertas a la vez', buscadorTitle:'Buscar vacantes',
+    buscadorLead:'Escribe el puesto una sola vez y ábrelo en todas las bolsas de trabajo al mismo tiempo.',
+    buscadorPuestoLabel:'Puesto', buscadorPuestoPh:'Ej. Gerente de producción',
+    buscadorCiudadLabel:'Ciudad (opcional)', buscadorCiudadPh:'Ej. Guadalajara, Jalisco',
+    buscadorBtnTodos:'Buscar en todas', buscadorBtnToggle:'Marcar / desmarcar todas',
+    buscadorHint:'Se abre una pestaña nueva por cada sitio marcado, ya con tu búsqueda lista.',
+    appsEyebrow:'Paso 3 — el currículum es una propuesta', appsTitle:'Seguimiento de solicitudes', appsLead:'Cada "no" solo significa que ésa no era.',
+    thEmpresa:'Empresa', thPuesto:'Puesto', thFecha:'Fecha', thContacto:'Contacto', thEstatus:'Estatus', thSeguimiento:'Seguimiento', thNotas:'Notas',
+    appsEmpty:'Aún no registras solicitudes.', newAppBtn:'+ Nueva solicitud', importAppsBtn:'Importar solicitudes de mis capturas',
+    importInboxBtn:'Actualizar con mis correos (16 confirmadas)',
+    viewTablaBtn:'📋 Tabla', viewCalendarioBtn:'📅 Calendario',
+    empresaNoEspecificada:'Empresa no especificada ({via})',
+    calendarMonthNames:['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'],
+    calendarWeekdayShort:['D','L','M','M','J','V','S'],
+    contactsEyebrow:'Paso 4 — la red vale más que el portal', contactsTitle:'Red de contactos', contactsLead:'Reactivar contactos no es pedir favores.',
+    thNombre:'Nombre', thRelacion:'Relación', contactsEmpty:'Aún no agregas contactos.', newContactBtn:'+ Nuevo contacto',
+    importContactsBtn:'Importar mis contactos de LinkedIn/Facebook',
+    cvEyebrow:'Preparación', cvTitle:'Currículum y entrevista', cvLead:'El talento no habla solo. Hay que prestarle voz.', cvTipsTitle:'Cómo estructurar tu CV hoy en día',
+    entrevistaBancoTitle:'Prepárate para la entrevista',
+    entrevistaBancoSub:'Domina la historia de tu propio currículum, pero no llegues en blanco a lo básico. Escribe tu respuesta, grábate diciéndola en voz alta, escúchate las veces que haga falta, y cuando te sientas listo, marca la pregunta como practicada. Aquí puedes ensayar con calma, todas las veces que necesites.',
+    entrevistaSpeechPh:'Escribe aquí cómo responderías esta pregunta, con tus propias palabras...',
+    entrevistaGrabarBtn:'Grabar', entrevistaGrabarOtraVezBtn:'Grabar de nuevo', entrevistaDetenerBtn:'Detener',
+    entrevistaMicError:'No se pudo acceder al micrófono. Revisa los permisos de tu navegador.',
+    entrevistaProgress:'Llevas {n} de {total} practicadas',
+    entrevistaMarcarBtn:'Marcar como practicada', entrevistaPracticadaBtn:'Practicada ✓',
+    quotesEyebrow:'Para los días difíciles', quotesTitle:'Frases para sostenerse', quotesLead:'La dignidad de una persona no la otorga su empleo.',
+    dayCounter:'Día {n} de la búsqueda', doorPctText:'{n}% de la meta semanal',
+    goalNames:['Solicitudes enviadas','Contactos reactivados','Entrevistas por preparar'],
+    goalHints:['nuevas vacantes esta semana','llamadas o mensajes','ensayadas en voz alta'],
+    statusOpts:['Por enviar','Enviada','Seguimiento','Entrevista','Oferta','No'],
+    contactStatusOpts:['Por contactar','Contactado','Respondió','En pausa'],
+    cvTips:[
+      'Adapta tu CV a cada vacante: usa las mismas palabras clave que aparecen en la descripción del puesto, no un CV genérico para todo.',
+      'Convierte tus logros en cifras verificables: "reduje el tiempo de validación 20%" pesa mucho más que "mejoré procesos".',
+      'Usa un diseño limpio y de una columna: evita tablas, columnas complejas, gráficos o íconos — muchos sistemas automáticos (ATS) no los leen bien.',
+      'Usa títulos de sección estándar: "Experiencia profesional", "Formación", "Habilidades" — títulos originales pueden no ser reconocidos por el sistema.',
+      'Extensión: una página si tienes pocos años de experiencia; hasta dos si tu trayectoria es más larga.',
+      'En los datos de contacto basta con nombre, teléfono, correo profesional y tu LinkedIn actualizado — ya no es necesario poner foto, edad, estado civil o dirección completa.',
+      'Guarda y envía tu CV siempre en PDF: conserva el formato intacto y se ve profesional en cualquier dispositivo. Evita enviarlo en Word — puede desconfigurarse al abrirse y resta seriedad — y nunca lo mandes como imagen o diseño exportado que dificulte la lectura automática.',
+      'Revisa la ortografía y la redacción con cuidado — un error de dedo puede descartarte antes de que alguien lea el resto.',
+      'Actualízalo cada vez que sumes una habilidad, un curso o un logro nuevo, no solo cuando estás buscando trabajo activamente.'
+    ],
+    quotes:[
+      'La página se voltea. La vida sigue. Y adelante hay más puertas de las que hoy se alcanzan a ver.',
+      'Una carencia identificada deja de ser una debilidad y se convierte en una tarea.',
+      'Cada "no" sólo significa que ésa no era; no significa que no hay ninguna.',
+      'El talento no habla solo. Hay que prestarle voz.',
+      'La dignidad de una persona no la otorga su empleo.',
+      'Orar como si todo dependiera de Dios y trabajar como si todo dependiera de uno.',
+      'El oficio no se cerró. La experiencia no se cerró. Lo único que se cerró fue una razón social.',
+      'No se sale a rogar. Se sale a ofrecer algo que se tiene y que vale.',
+      'No estás perdiendo el tiempo: estás juntando la fuerza que la próxima puerta va a necesitar.',
+      'El miedo a no encontrar nada y las ganas de encontrar algo pueden convivir en la misma persona el mismo día.',
+      'Tu valor no bajó de precio porque una empresa dejó de pagarte.',
+      'Hoy puede ser un día sin respuesta y aun así un día bien vivido.',
+      'Cuidar tu cuerpo y tu ánimo también cuenta como avanzar en la búsqueda.',
+      'No tienes que sentirte motivado para dar el siguiente paso. Solo tienes que darlo.',
+      'Comparar tu proceso con el de otro no acelera el tuyo.',
+      'El silencio de un reclutador no es un veredicto sobre ti.',
+      'Pedir ayuda no te hace menos capaz. Te hace menos solo.',
+      'Cada solicitud enviada es una semilla, no una apuesta perdida si no florece hoy.',
+      'Tu historia profesional no terminó. Está en un capítulo incómodo, nada más.',
+      'El descanso también prepara. No todo avance se ve como movimiento.'
+    ],
+    modalBrand:'Guarda tu progreso', modalPitch:'Ya cargaste información valiosa. Crea tu cuenta para no perderla y elige tú cuánto vale esta herramienta para ti.',
+    tabRegisterPay:'Guardar y apoyar', tabLoginModal:'Ya tengo cuenta',
+    nameLabel:'Nombre', emailLabel:'Correo', passwordLabel:'Contraseña',
+    amountLabel:'Acceso completo', amountHint:'Incluye guardado en la nube y búsquedas con inteligencia artificial para cerrar tus carencias.',
+    cardSectionLabel:'Datos de tu tarjeta', cardNameLabel:'Nombre en la tarjeta', cardNumberLabel:'Número de tarjeta',
+    cardExpLabel:'Vence (MM/AA)', cardCvvLabel:'CVV',
+    rpSubmitBtn:'Guardar mi progreso y apoyar', rpSubmitBtnLoading:'Procesando…',
+    secureNote:'Pago procesado de forma segura. Tu tarjeta nunca toca nuestro servidor.',
+    loginBtn:'Entrar', forgotLink:'¿Olvidaste tu contraseña?', backToLogin:'Volver a iniciar sesión', sendLinkBtn:'Enviar enlace de recuperación',
+    loginNote:'Al iniciar sesión se carga tu información guardada — tu avance de invitado en este navegador no se sube automáticamente.',
+    errInvalidCreds:'Correo o contraseña incorrectos.', errGeneric:'Algo salió mal. Intenta de nuevo.',
+    msgForgotSent:'Si existe una cuenta con ese correo, enviamos un enlace de recuperación.',
+    errPasswordShort:'La contraseña debe tener al menos 8 caracteres.',
+    errAmountLow:'El monto mínimo es {min} {cur}.', errCardGeneric:'Revisa los datos de tu tarjeta e intenta de nuevo.',
+  },
+  en: {
+    brandName:'Doors', brandTag:'Job search organizer',
+    portadaHeadline:'When there is no job, looking for one becomes the job.',
+    portadaSub:'This is where you organize every door you knock on, until one opens.',
+    portadaBtn:'Get started',
+    guestLabel:'Guest mode', guestBadge:'Not saved',
+    logoutBtn:'Log out', saveLinkBtn:'Save', localSave:'Saved in this browser',
+    savingNote:'Saving…', savedLocalNote:'Saved in this browser', savedServerNote:'Auto-saved', errorNote:'Could not save',
+    heroTitle:'When one door closes',
+    heroSub:'Keep your inventory, goals, applications, and network organized — while knocking on doors is the job for today.',
+    navResumen:'Overview', navInventario:'Honest inventory', navMetas:'Weekly goals',
+    navSolicitudes:'Applications', navContactos:'Network', navCurriculum:'Resume & interview', navFrases:'Words to hold onto',
+    resumenEyebrow:'Overview', resumenTitle:"What you've got so far",
+    resumenLead:"A day with completed tasks — even without results yet — is a day you kept control of something.",
+    guestBannerTitle:'Your progress only lives in this browser', guestBannerBody:'If you switch devices or clear your cache, you lose it. Save it with an account.', guestBannerBtn:'Save my progress',
+    statDiasLabel:'Days searching', statEnviadasLabel:'Applications sent', statEntrevistasLabel:'Interviews landed', statContactosLabel:'Contacts in your network',
+    metaWeekTitle:"This week's goal", metaWeekSub:'Adjust your goals in the "Weekly goals" tab.',
+    reminderTitle:'Reminder', reminderBody:"A company closing is not a verdict on the people who worked there. The craft didn't close. The experience didn't close. All that closed was a legal entity.",
+    invEyebrow:'Step 1 — before knocking on doors', invTitle:'Honest inventory',
+    invLead:"It's not a resume, it's an inventory. An identified gap stops being a weakness and becomes a task.",
+    strengthsTitle:'Strengths', strengthsSub:'Craft, problems solved, accumulated capital.', strengthPh:'E.g. Supplier and production management...',
+    gapsTitle:'Gaps → tasks', gapsSub:"What's missing, turned into something you can act on.", gapPh:'E.g. Technical English, a certification...',
+    gapHint:'Time without a job is time available to close exactly these gaps.', addBtn:'Add',
+    strengthEmpty:'Add your first strength.', gapEmpty:'Add your first gap — it becomes a task.',
+    gapEstado_pendiente:'Pending', gapEstado_progreso:'In progress', gapEstado_resuelta:'Resolved',
+    gapAccionPh:'What concrete action will you take?',
+    gapAiBtn:'Find how to improve this', gapAiBtnLoading:'Searching resources...', gapAiBtnError:'Search failed, try again',
+    metasEyebrow:'Step 2 — treat it like a job', metasTitle:'Weekly goals', metasLead:'Set a weekly number and hit it even without motivation.',
+    metasSemanaActual:'Week {n} in progress',
+    historialTitle:'Weekly history', historialSub:"Each week closes itself and stays on record here — no need to reset anything.",
+    historialSemanaLabel:'Week {n}', historialEnCursoLabel:'in progress', historialTotalLabel:'Accumulated total', historialEmpty:'No week has closed yet.',
+    navBuscador:'Search openings',
+    buscadorEyebrow:'Knock on several doors at once', buscadorTitle:'Search openings',
+    buscadorLead:'Type the role once and open it on every job board at the same time.',
+    buscadorPuestoLabel:'Role', buscadorPuestoPh:'E.g. Production manager',
+    buscadorCiudadLabel:'City (optional)', buscadorCiudadPh:'E.g. Austin, Texas',
+    buscadorBtnTodos:'Search all', buscadorBtnToggle:'Select / deselect all',
+    buscadorHint:'A new tab opens for each checked site, already pre-filled with your search.',
+    appsEyebrow:'Step 3 — your resume is a proposal', appsTitle:'Application tracker', appsLead:'Each "no" just means that one wasn\'t it.',
+    thEmpresa:'Company', thPuesto:'Role', thFecha:'Date', thContacto:'Contact', thEstatus:'Status', thSeguimiento:'Follow-up', thNotas:'Notes',
+    appsEmpty:"You haven't logged any applications yet.", newAppBtn:'+ New application', importAppsBtn:'Import applications from my screenshots',
+    importInboxBtn:'Update from my emails (16 confirmed)',
+    viewTablaBtn:'📋 Table', viewCalendarioBtn:'📅 Calendar',
+    empresaNoEspecificada:'Company not specified ({via})',
+    calendarMonthNames:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    calendarWeekdayShort:['S','M','T','W','T','F','S'],
+    contactsEyebrow:'Step 4 — your network beats the job board', contactsTitle:'Network', contactsLead:'Reactivating contacts is not asking for favors.',
+    thNombre:'Name', thRelacion:'Relationship', contactsEmpty:"You haven't added any contacts yet.", newContactBtn:'+ New contact',
+    importContactsBtn:'Import my LinkedIn/Facebook contacts',
+    cvEyebrow:'Preparation', cvTitle:'Resume & interview', cvLead:"Talent doesn't speak for itself. It needs a voice.", cvTipsTitle:'How to structure your resume today',
+    entrevistaBancoTitle:'Get ready for the interview',
+    entrevistaBancoSub:"Master the story of your own résumé, but don't walk in blind on the basics. Write your answer, record yourself saying it out loud, listen back as many times as you need, and when you feel ready, mark the question as practiced. Take your time here — as many run-throughs as you need.",
+    entrevistaSpeechPh:'Write how you would answer this question, in your own words...',
+    entrevistaGrabarBtn:'Record', entrevistaGrabarOtraVezBtn:'Record again', entrevistaDetenerBtn:'Stop',
+    entrevistaMicError:"Couldn't access the microphone. Check your browser permissions.",
+    entrevistaProgress:'{n} of {total} practiced',
+    entrevistaMarcarBtn:'Mark as practiced', entrevistaPracticadaBtn:'Practiced ✓',
+    quotesEyebrow:'For the hard days', quotesTitle:'Words to hold onto', quotesLead:"A person's dignity isn't granted by their job.",
+    dayCounter:'Day {n} of the search', doorPctText:'{n}% of weekly goal',
+    goalNames:['Applications sent','Contacts reactivated','Interviews to prepare'],
+    goalHints:['new postings this week','calls or messages','rehearsed out loud'],
+    statusOpts:['To send','Sent','Follow-up','Interview','Offer','No'],
+    contactStatusOpts:['To contact','Contacted','Replied','On hold'],
+    cvTips:[
+      'Tailor your resume to each posting: use the same keywords that appear in the job description, not one generic resume for everything.',
+      'Turn your achievements into verifiable numbers: "cut validation time by 20%" carries far more weight than "improved processes".',
+      'Use a clean, single-column layout: avoid tables, complex columns, graphics or icons — many automated systems (ATS) can\'t read them well.',
+      'Use standard section headings: "Professional experience", "Education", "Skills" — original headings may not be recognized by the system.',
+      'Length: one page if you have few years of experience; up to two pages if your track record is longer.',
+      'Contact info only needs your name, phone, professional email and an updated LinkedIn — photo, age, marital status and full address are no longer necessary.',
+      'Always save and send your resume as a PDF: it keeps the formatting intact and looks professional on any device. Avoid sending it as Word — it can lose its layout when opened and comes across as less polished — and never send it as an image or a design export that makes automated reading harder.',
+      'Proofread carefully — a single typo can get you screened out before anyone reads the rest.',
+      'Update it every time you gain a skill, course or achievement, not only when you\'re actively job hunting.'
+    ],
+    quotes:[
+      "The page turns. Life goes on. And ahead there are more doors than you can see today.",
+      'An identified gap stops being a weakness and becomes a task.',
+      'Each "no" just means that one wasn\'t it — not that there isn\'t one.',
+      "Talent doesn't speak for itself. It needs a voice.",
+      "A person's dignity isn't granted by their job.",
+      'Pray as if everything depended on God, and work as if everything depended on you.',
+      "The craft didn't close. The experience didn't close. All that closed was a legal entity.",
+      "You don't show up to beg. You show up to offer something valuable.",
+      "You're not wasting time — you're gathering the strength the next door will need.",
+      'The fear of finding nothing and the hope of finding something can live in the same person on the same day.',
+      "Your worth didn't drop in price just because a company stopped paying you.",
+      'A day without an answer can still be a day well lived.',
+      'Taking care of your body and your mood also counts as progress in the search.',
+      "You don't need to feel motivated to take the next step. You just need to take it.",
+      "Comparing your process to someone else's doesn't speed up yours.",
+      "A recruiter's silence isn't a verdict on you.",
+      "Asking for help doesn't make you less capable. It makes you less alone.",
+      "Every application sent is a seed, not a lost bet if it doesn't bloom today.",
+      "Your professional story didn't end. It's just in an uncomfortable chapter.",
+      'Rest prepares you too. Not all progress looks like movement.'
+    ],
+    modalBrand:'Save your progress', modalPitch:"You've loaded valuable information. Create an account so you don't lose it, and choose what this tool is worth to you.",
+    tabRegisterPay:'Save & support', tabLoginModal:'I already have an account',
+    nameLabel:'Name', emailLabel:'Email', passwordLabel:'Password',
+    amountLabel:'Full access', amountHint:'Includes cloud saving and AI-powered searches to close your gaps.',
+    cardSectionLabel:'Card details', cardNameLabel:'Name on card', cardNumberLabel:'Card number',
+    cardExpLabel:'Expires (MM/YY)', cardCvvLabel:'CVV',
+    rpSubmitBtn:'Save my progress & support', rpSubmitBtnLoading:'Processing…',
+    secureNote:'Payment processed securely. Your card never touches our server.',
+    loginBtn:'Log in', forgotLink:'Forgot your password?', backToLogin:'Back to log in', sendLinkBtn:'Send reset link',
+    loginNote:"Logging in loads your saved data — your guest progress in this browser isn't uploaded automatically.",
+    errInvalidCreds:'Incorrect email or password.', errGeneric:'Something went wrong. Try again.',
+    msgForgotSent:"If an account exists with that email, we've sent a reset link.",
+    errPasswordShort:'Password must be at least 8 characters.',
+    errAmountLow:'The minimum amount is {min} {cur}.', errCardGeneric:'Check your card details and try again.',
+  }
+};
+let lang = localStorage.getItem('lang') || 'es';
+
+function applyStaticI18n(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    if(T[lang][key]) el.textContent = T[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-ph');
+    if(T[lang][key]) el.placeholder = T[lang][key];
+  });
+  document.getElementById('mainLangEs').classList.toggle('active', lang==='es');
+  document.getElementById('mainLangEn').classList.toggle('active', lang==='en');
+  if(!currentUser){
+    document.getElementById('saveNoteText').textContent = t('savedLocalNote');
+  }
+}
+function setLang(l){
+  lang = l;
+  localStorage.setItem('lang', l);
+  applyStaticI18n();
+  renderAll();
+}
+function t(key){ return T[lang][key] || key; }
+
+/* ================= GUEST / AUTH STATE ================= */
+const GUEST_KEY = 'guest-estado';
+let authToken = localStorage.getItem('token') || null;
+let currentUser = null;
+let saveModalShownOnce = localStorage.getItem('save-modal-shown') === '1';
+
+function updateIdentityUI(){
+  const logoutBtn = document.getElementById('logoutBtn');
+  const saveLinkBtn = document.getElementById('saveLinkBtn');
+  const badge = document.getElementById('planBadge');
+  const emailEl = document.getElementById('userEmailDisplay');
+  const guestBanner = document.getElementById('guestBanner');
+  if(currentUser){
+    emailEl.textContent = currentUser.email;
+    emailEl.removeAttribute('data-i18n');
+    badge.textContent = 'Premium';
+    badge.removeAttribute('data-i18n');
+    badge.classList.add('premium');
+    logoutBtn.style.display = 'inline';
+    saveLinkBtn.style.display = 'none';
+    guestBanner.style.display = 'none';
+  } else {
+    emailEl.textContent = t('guestLabel');
+    badge.textContent = t('guestBadge');
+    badge.classList.remove('premium');
+    logoutBtn.style.display = 'none';
+    saveLinkBtn.style.display = 'inline';
+  }
+}
+
+/* ---- modal open/close ---- */
+function openSaveModal(){
+  document.getElementById('saveOverlay').classList.add('open');
+  setSaveMode('registerpay');
+}
+function closeSaveModal(){
+  document.getElementById('saveOverlay').classList.remove('open');
+}
+function setSaveMode(mode){
+  document.getElementById('saveError').style.display='none';
+  document.getElementById('saveMsg').style.display='none';
+  document.getElementById('registerPayForm').style.display = mode==='registerpay' ? 'block':'none';
+  document.getElementById('loginModalForm').style.display = mode==='login' ? 'block':'none';
+  document.getElementById('forgotModalForm').style.display = mode==='forgot' ? 'block':'none';
+  document.getElementById('tabRegisterPay').classList.toggle('active', mode==='registerpay');
+  document.getElementById('tabLoginModal').classList.toggle('active', mode==='login' || mode==='forgot');
+}
+function showSaveError(msg){
+  const el = document.getElementById('saveError');
+  el.textContent = msg; el.style.display='block';
+  document.getElementById('saveMsg').style.display='none';
+}
+function showSaveMsg(msg){
+  const el = document.getElementById('saveMsg');
+  el.textContent = msg; el.style.display='block';
+  document.getElementById('saveError').style.display='none';
+}
+
+async function api(path, options={}){
+  const headers = Object.assign({'Content-Type':'application/json'}, options.headers||{});
+  if(authToken) headers['Authorization'] = 'Bearer ' + authToken;
+  const res = await fetch(API_BASE + path, Object.assign({}, options, {headers}));
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || t('errGeneric'));
+  return data;
+}
+
+/* ---- tokenizar tarjeta con Openpay.js ---- */
+function tokenizeCard(){
+  return new Promise((resolve, reject)=>{
+    if(!window.OpenPay){ return reject(new Error(t('errCardGeneric'))); }
+    const cardData = {
+      holder_name: document.getElementById('cardHolder').value.trim(),
+      card_number: document.getElementById('cardNumber').value.replace(/\s+/g,''),
+      expiration_month: document.getElementById('cardExpMonth').value.trim(),
+      expiration_year: document.getElementById('cardExpYear').value.trim(),
+      cvv2: document.getElementById('cardCvv').value.trim(),
+    };
+    OpenPay.token.create(cardData, function(response){
+      resolve(response.data.id);
+    }, function(errResp){
+      const msg = (errResp && errResp.data && errResp.data.description) || t('errCardGeneric');
+      reject(new Error(msg));
+    });
+  });
+}
+function getDeviceSessionId(){
+  try{ return OpenPay.deviceData.setup(); }catch(e){ return undefined; }
+}
+
+/* ---- registrar + pagar ---- */
+async function handleRegisterAndPay(e){
+  e.preventDefault();
+  const btn = document.getElementById('rpSubmitBtn');
+  const nombre = document.getElementById('rpName').value.trim();
+  const email = document.getElementById('rpEmail').value.trim();
+  const password = document.getElementById('rpPassword').value;
+  const monto = 100; // precio fijo — acceso completo
+
+  if(password.length < 8) return showSaveError(t('errPasswordShort')), false;
+
+  btn.disabled = true; btn.textContent = t('rpSubmitBtnLoading');
+  try{
+    const token_id = await tokenizeCard();
+    const device_session_id = getDeviceSessionId();
+    const data = await api('/auth/register-and-pay', {
+      method:'POST',
+      body: JSON.stringify({ email, password, nombre, idioma: lang, monto, moneda:'MXN', token_id, device_session_id, estado: state })
+    });
+    authToken = data.token;
+    localStorage.setItem('token', authToken);
+    currentUser = data.user;
+    localStorage.removeItem(GUEST_KEY);
+    closeSaveModal();
+    updateIdentityUI();
+    document.getElementById('saveNote').className = 'save-note';
+    document.getElementById('saveNoteText').textContent = t('savedServerNote');
+  }catch(err){
+    showSaveError(err.message);
+  }
+  btn.disabled = false; btn.textContent = t('rpSubmitBtn');
+  return false;
+}
+
+async function handleLoginModal(e){
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  try{
+    const data = await api('/auth/login', {method:'POST', body: JSON.stringify({email, password})});
+    authToken = data.token;
+    localStorage.setItem('token', authToken);
+    currentUser = data.user;
+    closeSaveModal();
+    updateIdentityUI();
+    await loadState();
+  }catch(err){ showSaveError(err.message); }
+  return false;
+}
+async function handleForgotModal(e){
+  e.preventDefault();
+  const email = document.getElementById('forgotEmail').value.trim();
+  try{
+    await api('/auth/forgot-password', {method:'POST', body: JSON.stringify({email})});
+    showSaveMsg(t('msgForgotSent'));
+  }catch(err){ showSaveError(err.message); }
+  return false;
+}
+function handleLogout(){
+  authToken = null; currentUser = null;
+  localStorage.removeItem('token');
+  updateIdentityUI();
+  document.getElementById('saveNote').className = 'save-note';
+  document.getElementById('saveNoteText').textContent = t('savedLocalNote');
+  loadState();
+}
+
+/* ================= APP STATE ================= */
+let state = {
+  startDate: null, strengths: [], gaps: [],
+  goals: [
+    {id:'g1', target:10, current:0},
+    {id:'g2', target:5, current:0},
+    {id:'g3', target:2, current:0}
+  ],
+  applications: [], contacts: [], interviewChecked: [], interviewSpeech: {},
+  weekHistory: [], currentWeekNumber: 1
+};
+let saveTimer = null;
+function scheduleSave(){
+  const note = document.getElementById('saveNote');
+  note.className = 'save-note saving';
+  document.getElementById('saveNoteText').textContent = t('savingNote');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{
+      if(currentUser){
+        await api('/state', {method:'PUT', body: JSON.stringify({estado: state})});
+        document.getElementById('saveNoteText').textContent = t('savedServerNote');
+      } else {
+        localStorage.setItem(GUEST_KEY, JSON.stringify(state));
+        document.getElementById('saveNoteText').textContent = t('savedLocalNote');
+      }
+      note.className = 'save-note';
+    }catch(e){
+      note.className = 'save-note error';
+      document.getElementById('saveNoteText').textContent = t('errorNote');
+      console.error('No se pudo guardar', e);
+    }
+  }, 500);
+  checkEngagement();
+}
+function checkEngagement(){
+  if(currentUser || saveModalShownOnce) return;
+  const score = state.strengths.length + state.gaps.length + state.applications.length +
+    state.contacts.length + (state.interviewChecked||[]).length +
+    state.goals.reduce((a,g)=>a + (g.current>0?1:0), 0);
+  if(score >= ENGAGEMENT_THRESHOLD){
+    saveModalShownOnce = true;
+    localStorage.setItem('save-modal-shown','1');
+    document.getElementById('guestBanner').style.display = 'flex';
+    openSaveModal();
+  }
+}
+async function loadState(){
+  if(currentUser){
+    try{
+      const data = await api('/state');
+      if(data.estado && Object.keys(data.estado).length){
+        state = Object.assign({}, state, data.estado);
+      }
+    }catch(e){ console.error('No se pudo cargar el estado', e); }
+  } else {
+    const raw = localStorage.getItem(GUEST_KEY);
+    if(raw){
+      try{ state = Object.assign({}, state, JSON.parse(raw)); }catch(e){}
+    }
+    if(saveModalShownOnce) document.getElementById('guestBanner').style.display = 'flex';
+  }
+  if(!state.startDate){ state.startDate = new Date().toISOString().slice(0,10); }
+  if(!state.interviewChecked){ state.interviewChecked = []; }
+  if(!state.interviewSpeech){ state.interviewSpeech = {}; }
+  if(!state.weekHistory){ state.weekHistory = []; }
+  if(!state.currentWeekNumber){ state.currentWeekNumber = 1; }
+  if(checkWeekRollover()){ scheduleSave(); }
+  renderAll();
+}
+
+/* ---------------- tabs ---------------- */
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab-btn');
+  if(!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.panel).classList.add('active');
+});
+
+/* ---------------- inventario ---------------- */
+function addItem(key, inputId){
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if(!val) return;
+  state[key].push({id:'i'+Date.now(), text:val});
+  input.value='';
+  scheduleSave();
+  renderInventory();
+}
+function addGap(){
+  const input = document.getElementById('gapInput');
+  const val = input.value.trim();
+  if(!val) return;
+  state.gaps.push({id:'g'+Date.now(), text:val, estado:'pendiente', accion:'', fecha:'', recursos:null});
+  input.value='';
+  scheduleSave();
+  renderInventory();
+}
+function removeItem(key, id){
+  state[key] = state[key].filter(i=>i.id!==id);
+  scheduleSave();
+  renderInventory();
+}
+function updateGapField(id, field, value){
+  const gap = state.gaps.find(g=>g.id===id);
+  if(!gap) return;
+  gap[field] = value;
+  scheduleSave();
+}
+function renderInventory(){
+  const sEl = document.getElementById('strengthList');
+  const gEl = document.getElementById('gapList');
+  sEl.innerHTML = state.strengths.length ? state.strengths.map(i=>rowHtml('strengths',i)).join('') : `<div class="empty">${t('strengthEmpty')}</div>`;
+  gEl.innerHTML = state.gaps.length ? state.gaps.map(i=>gapRowHtml(i)).join('') : `<div class="empty">${t('gapEmpty')}</div>`;
+}
+function rowHtml(key,i){
+  return `<div class="item-row"><span class="dot"></span><span>${escapeHtml(i.text)}</span><button onclick="removeItem('${key}','${i.id}')">✕</button></div>`;
+}
+function gapRowHtml(g){
+  const estadoOpts = ['pendiente','progreso','resuelta'].map(v=>
+    `<option value="${v}" ${g.estado===v?'selected':''}>${t('gapEstado_'+v)}</option>`).join('');
+  const recursosHtml = g.recursos ? `<div class="gap-recursos">${g.recursos.map(r=>
+      `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.titulo)}</a>`).join('')}</div>` : '';
+  return `<div class="gap-card" data-gap="${g.id}">
+    <div class="gap-card-top">
+      <span class="dot"></span><span class="gap-text">${escapeHtml(g.text)}</span>
+      <button class="gap-remove" onclick="removeItem('gaps','${g.id}')">✕</button>
+    </div>
+    <div class="gap-card-row">
+      <select class="gap-select" onchange="updateGapField('${g.id}','estado',this.value)">${estadoOpts}</select>
+      <input type="date" class="gap-date" value="${g.fecha||''}" onchange="updateGapField('${g.id}','fecha',this.value)">
+    </div>
+    <input type="text" class="gap-accion" data-i18n-ph="gapAccionPh" placeholder="${t('gapAccionPh')}" value="${escapeHtml(g.accion||'')}"
+      onchange="updateGapField('${g.id}','accion',this.value)">
+    <button class="btn gap-ai-btn" onclick="buscarRecursosIA('${g.id}')" id="aiBtn-${g.id}">
+      <span data-i18n="gapAiBtn">Buscar cómo mejorar esto</span>
+    </button>
+    ${recursosHtml}
+  </div>`;
+}
+async function buscarRecursosIA(gapId){
+  const gap = state.gaps.find(g=>g.id===gapId);
+  if(!gap) return;
+  const btn = document.getElementById('aiBtn-'+gapId);
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span>${t('gapAiBtnLoading')}</span>`;
+  try{
+    const data = await api('/ai/buscar-recursos', {
+      method:'POST',
+      body: JSON.stringify({ carencia: gap.text, idioma: lang })
+    });
+    gap.recursos = data.recursos || [];
+    scheduleSave();
+    renderInventory();
+  }catch(e){
+    btn.innerHTML = `<span>${t('gapAiBtnError')}</span>`;
+    setTimeout(()=>{ btn.innerHTML = original; btn.disabled=false; }, 2500);
+    return;
+  }
+}
+
+/* ---------------- buscador de vacantes ---------------- */
+const SITIOS_BUSQUEDA = [
+  { id:'occ', nombre:'OCC Mundial', url:(p,c)=>`https://www.occ.com.mx/empleos/de-${encodeURIComponent(p)}/en-${encodeURIComponent(c||'mexico')}/` },
+  { id:'computrabajo', nombre:'Computrabajo', url:(p,c)=>`https://www.computrabajo.com.mx/trabajo-de-${encodeURIComponent(p)}${c?'-en-'+encodeURIComponent(c):''}` },
+  { id:'indeed', nombre:'Indeed', url:(p,c)=>`https://mx.indeed.com/jobs?q=${encodeURIComponent(p)}${c?'&l='+encodeURIComponent(c):''}` },
+  { id:'linkedin', nombre:'LinkedIn', url:(p,c)=>`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(p)}${c?'&location='+encodeURIComponent(c):''}` },
+  { id:'bumeran', nombre:'Bumeran', url:(p,c)=>`https://www.bumeran.com.mx/empleos-busqueda-${encodeURIComponent(p.replace(/\s+/g,'-'))}.html` },
+  { id:'glassdoor', nombre:'Glassdoor', url:(p,c)=>`https://www.glassdoor.com.mx/Empleo/index.htm?sc.keyword=${encodeURIComponent(p)}${c?'&locT=C&locKeyword='+encodeURIComponent(c):''}` },
+];
+let sitiosSeleccionados = new Set(SITIOS_BUSQUEDA.map(s=>s.id));
+
+function renderSitiosBuscador(){
+  const cont = document.getElementById('buscadorSitios');
+  if(!cont) return;
+  cont.innerHTML = SITIOS_BUSQUEDA.map(s => `
+    <label class="sitio-chip ${sitiosSeleccionados.has(s.id)?'checked':''}" for="sitio-${s.id}">
+      <input type="checkbox" id="sitio-${s.id}" ${sitiosSeleccionados.has(s.id)?'checked':''} onchange="toggleSitio('${s.id}')">
+      ${s.nombre}
+    </label>`).join('');
+}
+function toggleSitio(id){
+  if(sitiosSeleccionados.has(id)) sitiosSeleccionados.delete(id);
+  else sitiosSeleccionados.add(id);
+  renderSitiosBuscador();
+}
+function toggleTodosSitios(){
+  if(sitiosSeleccionados.size === SITIOS_BUSQUEDA.length) sitiosSeleccionados.clear();
+  else SITIOS_BUSQUEDA.forEach(s=>sitiosSeleccionados.add(s.id));
+  renderSitiosBuscador();
+}
+function buscarEnTodos(){
+  const puesto = document.getElementById('buscadorPuesto').value.trim();
+  const ciudad = document.getElementById('buscadorCiudad').value.trim();
+  if(!puesto){
+    document.getElementById('buscadorPuesto').focus();
+    return;
+  }
+  const activos = SITIOS_BUSQUEDA.filter(s=>sitiosSeleccionados.has(s.id));
+  if(!activos.length) return;
+  activos.forEach(s => window.open(s.url(puesto, ciudad), '_blank'));
+}
+
+/* ---------------- metas ---------------- */
+function renderGoals(){
+  const names = t('goalNames'); const hints = t('goalHints');
+  const c = document.getElementById('goalsContainer');
+  c.innerHTML = state.goals.map((g,idx)=>`
+    <div class="card goal-card">
+      <div style="flex:1;min-width:180px;">
+        <div class="goal-name">${names[idx]||''}<small>${hints[idx]||''} ·
+          <input type="number" min="0" style="width:50px;display:inline-block;" value="${g.target}" onchange="setTarget('${g.id}', this.value)">
+        </small></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct(g)}%;"></div></div>
+      </div>
+      <div class="goal-controls">
+        <button class="step-btn" onclick="stepGoal('${g.id}',-1)">–</button>
+        <span class="count">${g.current} / ${g.target}</span>
+        <button class="step-btn" onclick="stepGoal('${g.id}',1)">+</button>
+      </div>
+    </div>
+  `).join('');
+  const semanaLabel = document.getElementById('metasSemanaLabel');
+  if(semanaLabel) semanaLabel.textContent = t('metasSemanaActual').replace('{n}', state.currentWeekNumber||1);
+  renderResumenGoals();
+  renderHistorialSemanal();
+  updateDoor();
+}
+function pct(g){ return g.target>0 ? Math.min(100, Math.round(g.current/g.target*100)) : 0; }
+function stepGoal(id,delta){
+  const g = state.goals.find(x=>x.id===id);
+  if(!g) return;
+  g.current = Math.max(0, g.current+delta);
+  scheduleSave(); renderGoals(); renderResumen();
+}
+function setTarget(id,val){
+  const g = state.goals.find(x=>x.id===id);
+  if(!g) return;
+  g.target = Math.max(1, parseInt(val)||1);
+  scheduleSave(); renderGoals();
+}
+/* Las semanas se cierran solas: si ya pasó una semana calendario desde el
+   último corte, se archiva lo logrado en el historial y las metas vuelven a 0. */
+function checkWeekRollover(){
+  if(!state.startDate) return false;
+  const start = new Date(state.startDate);
+  const today = new Date();
+  const diffDays = Math.floor((today-start)/86400000);
+  const actualWeek = Math.max(1, Math.floor(diffDays/7)+1);
+  if(!state.currentWeekNumber) state.currentWeekNumber = 1;
+  if(!state.weekHistory) state.weekHistory = [];
+  let cambio = false;
+  while(state.currentWeekNumber < actualWeek){
+    state.weekHistory.push({
+      semana: state.currentWeekNumber,
+      resultados: state.goals.map(g=>({id:g.id, current:g.current, target:g.target}))
+    });
+    state.goals.forEach(g=>g.current=0);
+    state.currentWeekNumber++;
+    cambio = true;
+  }
+  return cambio;
+}
+function renderResumenGoals(){
+  const names = t('goalNames');
+  const el = document.getElementById('resumenGoals');
+  el.innerHTML = state.goals.map((g,idx)=>`
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+        <span>${names[idx]||''}</span><span class="mono">${g.current}/${g.target}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct(g)}%;"></div></div>
+    </div>`).join('');
+}
+function renderHistorialSemanal(){
+  const el = document.getElementById('resumenHistorial');
+  if(!el) return;
+  const names = t('goalNames');
+  const history = state.weekHistory || [];
+  const currentWeek = state.currentWeekNumber || 1;
+  const filas = history.map(w => ({semana:w.semana, resultados:w.resultados, enCurso:false}))
+    .concat([{semana:currentWeek, resultados: state.goals.map(g=>({id:g.id,current:g.current,target:g.target})), enCurso:true}]);
+  const totalesPorId = {};
+  state.goals.forEach(g=>totalesPorId[g.id]=0);
+  history.forEach(w=>w.resultados.forEach(r=>{ totalesPorId[r.id]=(totalesPorId[r.id]||0)+r.current; }));
+  state.goals.forEach(g=>{ totalesPorId[g.id]=(totalesPorId[g.id]||0)+g.current; });
+  const filasHtml = filas.slice().reverse().map(f => `
+    <div class="historial-semana ${f.enCurso?'en-curso':''}">
+      <div class="historial-semana-num">${t('historialSemanaLabel').replace('{n}', f.semana)}${f.enCurso ? ' · ' + t('historialEnCursoLabel') : ''}</div>
+      <div class="historial-semana-detalle">${f.resultados.map((r,idx)=>`${names[idx]||''}: ${r.current}/${r.target}`).join(' · ')}</div>
+    </div>`).join('');
+  const totalHtml = `<div class="historial-total">${t('historialTotalLabel')}: ${state.goals.map((g,idx)=>`${names[idx]} ${totalesPorId[g.id]}`).join(' · ')}</div>`;
+  el.innerHTML = filasHtml + totalHtml;
+}
+function updateDoor(){
+  const total = state.goals.reduce((a,g)=>a+pct(g),0)/(state.goals.length||1);
+  const door = document.getElementById('doorGroup');
+  const scaleX = 1 - (total/100)*0.55;
+  door.style.transform = `translate(12px,0) scale(${scaleX},1) translate(-12px,0)`;
+  document.getElementById('doorPct').textContent = t('doorPctText').replace('{n}', Math.round(total));
+}
+
+/* ---------------- solicitudes ---------------- */
+function addApplication(){
+  state.applications.unshift({
+    id:'a'+Date.now(), empresa:'', puesto:'', fecha:new Date().toISOString().slice(0,10),
+    contacto:'', estatus: t('statusOpts')[0], seguimiento:'', notas:''
+  });
+  scheduleSave(); renderApplications();
+}
+function updateApp(id, field, value){
+  const a = state.applications.find(x=>x.id===id);
+  if(!a) return;
+  a[field]=value;
+  scheduleSave();
+  if(field==='estatus') renderApplications(); else renderResumen();
+}
+function removeApp(id){
+  state.applications = state.applications.filter(a=>a.id!==id);
+  scheduleSave(); renderApplications();
+}
+function importarSolicitudesCapturas(){
+  const importadas = [
+    {empresa:'Fresenius Kabi México, S.A. de C.V.', puesto:'Ingeniería de Validaciones', fecha:'2026-05-27', estatus:'Enviada', notas:'Jalisco. Salario no mostrado.'},
+    {empresa:'MediAccess SAPi de CV', puesto:'Jefe de Validación', fecha:'2026-05-27', estatus:'Enviada', notas:'El Salto, Jal. $30,000–$32,000. 50% de postulaciones revisadas (Indeed).'},
+    {empresa:'Confidential Company', puesto:'Gerente de Operaciones Ramo Farmacéutico', fecha:'2026-01-07', estatus:'No', notas:'Jalisco. $75,000–$90,000. Vacante cerrada.'},
+    {empresa:'Humana 11', puesto:'Director General', fecha:'', estatus:'Enviada', notas:'Tepatitlán de Morelos, Jal. (Indeed).'},
+    {empresa:'Bachoco', puesto:'Analista Información Gerencial', fecha:'', estatus:'Enviada', notas:'Desde casa (Indeed).'},
+    {empresa:'KIngs Crown Candies', puesto:'Gerente de Planta', fecha:'', estatus:'Enviada', notas:'Tepatitlán de Morelos Centro, Jal. 80% revisadas. Indeed marca respuesta poco probable.'},
+    {empresa:'Aleaciones Dentales Zeyco', puesto:'Supervisor de acondicionamiento de estériles', fecha:'', estatus:'No', notas:'La Haciendita, Jal. La empresa no te seleccionó (Indeed).'},
+    {empresa:'Laboratorios Sophia', puesto:'Ingeniero de Validación de Sistemas Críticos', fecha:'2026-07-19', estatus:'Enviada', notas:'Guadalajara, Jal. (Indeed).'},
+    {empresa:'Ulsa Tech', puesto:'Supervisor de Manufactura de sólidos', fecha:'', estatus:'Enviada', notas:'Guadalajara, Jal. 50% revisadas. Indeed marca respuesta poco probable.'},
+    {empresa:'Productos Maver, S.A. de C.V.', puesto:'Supervisor de Proceso Naturex', fecha:'', estatus:'Enviada', notas:'Guadalajara, Jal. (Indeed).'},
+    {empresa:'Ultra Laboratorios', puesto:'Supervisor de Validación de Sistemas Críticos', fecha:'', estatus:'Enviada', notas:'Parque Industrial El Álamo, Jal. Postulado el mismo día (Indeed).'},
+    {empresa:'Lácteos La Montesa', puesto:'Supervisor de Planta', fecha:'', estatus:'Enviada', notas:'Las Cumbres, Ags. (Indeed).'},
+    {empresa:'Stark Pharma Solutions Inc', puesto:'Process Validation Engineer', fecha:'', estatus:'Enviada', notas:'Raleigh, NC. Contrato por obra. Vía LinkedIn — contactado por Karthik Mutyala.'},
+  ];
+  const yaExiste = (empresa, puesto) => state.applications.some(a =>
+    a.empresa.trim().toLowerCase() === empresa.trim().toLowerCase() &&
+    a.puesto.trim().toLowerCase() === puesto.trim().toLowerCase());
+  let agregadas = 0;
+  importadas.forEach(imp => {
+    if(yaExiste(imp.empresa, imp.puesto)) return;
+    state.applications.push({
+      id:'a'+Date.now()+Math.random().toString(36).slice(2,7),
+      empresa: imp.empresa, puesto: imp.puesto, fecha: imp.fecha,
+      contacto:'', estatus: imp.estatus, seguimiento:'', notas: imp.notas
+    });
+    agregadas++;
+  });
+  scheduleSave();
+  renderApplications();
+  const btn = document.getElementById('importAppsBtn');
+  if(btn) btn.textContent = agregadas > 0
+    ? (lang==='es' ? `Se importaron ${agregadas} solicitudes` : `${agregadas} applications imported`)
+    : (lang==='es' ? 'Ya estaban importadas' : 'Already imported');
+}
+function importarSolicitudesInbox(){
+  // Confirmadas por correo (revisión directa de bandeja de entrada) — fechas reales.
+  const NO_ESPECIFICADA = 'no especificada';
+  const nuevas = [
+    {empresa:'Ultra Laboratorios', puesto:'Supervisor de Validación de Sistemas Críticos', fecha:'2026-08-03', via:'Indeed'},
+    {empresa:'Lácteos La Montesa', puesto:'Supervisor de Planta', fecha:'2026-07-28', via:'Indeed'},
+    {empresa:'Productos Maver, S.A. de C.V.', puesto:'Supervisor de Proceso Naturex', fecha:'2026-07-21', via:'Indeed'},
+    {empresa:'Laboratorios Sophia', puesto:'Ingeniero de Validación', fecha:'2026-07-16', via:'Directo (sitio de empresa)'},
+    {empresa:'Ulsa Tech', puesto:'Supervisor de Manufactura de Sólidos', fecha:'2026-07-16', via:'Indeed'},
+    {empresa:NO_ESPECIFICADA, puesto:'Jefatura de Producción', fecha:'2026-07-08', via:'OCC'},
+    {empresa:'Biofarma Natural CMD', puesto:'Director de Cadena de Suministro (farmacéutica)', fecha:'2026-07-07', via:'Indeed'},
+    {empresa:'Bachoco', puesto:'Analista de Información Gerencial', fecha:'2026-07-06', via:'Indeed (remoto)'},
+    {empresa:'Aleaciones Dentales Zeyco', puesto:'Supervisor de Acondicionamiento de Estériles', fecha:'2026-07-06', via:'Indeed'},
+    {empresa:'CobaltoTalent', puesto:'Director de Operaciones e Innovación', fecha:'2026-07-06', via:'Indeed'},
+    {empresa:'MediAccess SAPI de CV', puesto:'Jefe de Validación', fecha:'2026-07-03', via:'Indeed'},
+    {empresa:'Kings Crown Candies', puesto:'Gerente de Planta', fecha:'2026-07-03', via:'Indeed'},
+    {empresa:'Humana 11', puesto:'Director General', fecha:'2026-06-30', via:'Indeed'},
+    {empresa:NO_ESPECIFICADA, puesto:'Químico de Validación', fecha:'2026-06-24', via:'OCC'},
+    {empresa:NO_ESPECIFICADA, puesto:'Ingeniería de Validaciones', fecha:'2026-05-27', via:'OCC'},
+    {empresa:'Grupo PiSA', puesto:'Puesto no especificado', fecha:'2026-05-21', via:'Directo'},
+  ];
+  const normEmpresa = s => (s||'').toLowerCase().replace(/\(.*\)/,'').trim();
+  const normPuesto = s => (s||'').toLowerCase().trim();
+  let agregadas = 0, actualizadas = 0, sinCambio = 0;
+  nuevas.forEach(n => {
+    const notaConfirmacion = `Confirmado por correo — vía ${n.via}, ${n.fecha}.`;
+    if(normEmpresa(n.empresa) !== NO_ESPECIFICADA){
+      const existente = state.applications.find(a => normEmpresa(a.empresa) === normEmpresa(n.empresa));
+      if(existente){
+        const cambioFecha = existente.fecha !== n.fecha;
+        existente.fecha = n.fecha;
+        if(!existente.notas || !existente.notas.includes('Confirmado por correo')){
+          existente.notas = (existente.notas ? existente.notas + ' ' : '') + notaConfirmacion;
+        }
+        if(cambioFecha) actualizadas++; else sinCambio++;
+        return;
+      }
+    } else {
+      // sin nombre de empresa (correo de OCC sin remitente identificado):
+      // evita duplicar si ya existe una solicitud con el mismo puesto y fecha
+      const posibleDup = state.applications.find(a =>
+        normPuesto(a.puesto) === normPuesto(n.puesto) && a.fecha === n.fecha);
+      if(posibleDup){
+        if(!posibleDup.notas || !posibleDup.notas.includes('Confirmado por correo')){
+          posibleDup.notas = (posibleDup.notas ? posibleDup.notas + ' ' : '') + notaConfirmacion;
+        }
+        sinCambio++;
+        return;
+      }
+    }
+    state.applications.push({
+      id:'a'+Date.now()+Math.random().toString(36).slice(2,7),
+      empresa: normEmpresa(n.empresa) === NO_ESPECIFICADA ? t('empresaNoEspecificada').replace('{via}', n.via) : n.empresa,
+      puesto: n.puesto, fecha: n.fecha, contacto:'', estatus: t('statusOpts')[1], seguimiento:'',
+      notas: notaConfirmacion
+    });
+    agregadas++;
+  });
+  scheduleSave();
+  renderApplications();
+  const btn = document.getElementById('importInboxBtn');
+  if(btn){
+    btn.textContent = lang==='es'
+      ? `${agregadas} nuevas, ${actualizadas} con fecha corregida`
+      : `${agregadas} new, ${actualizadas} dates corrected`;
+  }
+}
+function renderApplications(){
+  const opts = t('statusOpts');
+  const body = document.getElementById('appsBody');
+  const empty = document.getElementById('appsEmpty');
+  empty.style.display = state.applications.length ? 'none' : 'block';
+  body.innerHTML = state.applications.map(a=>`
+    <tr>
+      <td><input type="text" title="${escapeAttr(a.empresa)}" value="${escapeAttr(a.empresa)}" onchange="updateApp('${a.id}','empresa',this.value)"></td>
+      <td><input type="text" title="${escapeAttr(a.puesto)}" value="${escapeAttr(a.puesto)}" onchange="updateApp('${a.id}','puesto',this.value)"></td>
+      <td><input type="date" value="${a.fecha}" onchange="updateApp('${a.id}','fecha',this.value)"></td>
+      <td><input type="text" title="${escapeAttr(a.contacto)}" value="${escapeAttr(a.contacto)}" onchange="updateApp('${a.id}','contacto',this.value)"></td>
+      <td>
+        <select onchange="updateApp('${a.id}','estatus',this.value)">
+          ${opts.map(o=>`<option value="${o}" ${o===a.estatus?'selected':''}>${o}</option>`).join('')}
+        </select>
+        <div style="margin-top:4px;"><span class="status-pill st-${a.estatus.replace(' ','-')}">${a.estatus}</span></div>
+      </td>
+      <td><input type="date" value="${a.seguimiento}" onchange="updateApp('${a.id}','seguimiento',this.value)"></td>
+      <td><input type="text" title="${escapeAttr(a.notas)}" value="${escapeAttr(a.notas)}" onchange="updateApp('${a.id}','notas',this.value)"></td>
+      <td class="row-actions"><button onclick="removeApp('${a.id}')">✕</button></td>
+    </tr>
+  `).join('');
+  renderAppsCalendar();
+}
+
+/* ---------------- vista tabla / calendario ---------------- */
+let appsViewMode = 'tabla';
+let calendarViewDate = new Date();
+function setAppsView(mode){
+  appsViewMode = mode;
+  document.getElementById('viewBtnTabla').classList.toggle('active', mode==='tabla');
+  document.getElementById('viewBtnCalendario').classList.toggle('active', mode==='calendario');
+  document.getElementById('appsTableWrap').style.display = mode==='tabla' ? '' : 'none';
+  document.getElementById('appsCalendarWrap').style.display = mode==='calendario' ? '' : 'none';
+  if(mode==='calendario') renderAppsCalendar();
+}
+function calendarMonthShift(delta){
+  calendarViewDate.setMonth(calendarViewDate.getMonth()+delta);
+  renderAppsCalendar();
+}
+function renderAppsCalendar(){
+  const grid = document.getElementById('calendarGrid');
+  const label = document.getElementById('calendarMonthLabel');
+  if(!grid || !label) return;
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  const monthNames = t('calendarMonthNames');
+  const weekdayNames = t('calendarWeekdayShort');
+  label.textContent = `${monthNames[month]} ${year}`;
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const byDate = {};
+  state.applications.forEach(a=>{
+    if(!a.fecha) return;
+    if(!byDate[a.fecha]) byDate[a.fecha]=[];
+    byDate[a.fecha].push(a);
+  });
+  let cells = weekdayNames.map(w=>`<div class="cal-weekday">${w}</div>`).join('');
+  for(let i=0;i<startWeekday;i++) cells += `<div class="cal-cell empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayApps = byDate[dateStr] || [];
+    const hasApps = dayApps.length>0;
+    cells += `<div class="cal-cell ${hasApps?'has-apps':''}">
+      <span class="cal-daynum">${d}</span>
+      ${hasApps ? `<div class="cal-dots">${dayApps.slice(0,4).map(()=>'<span class="cal-dot"></span>').join('')}${dayApps.length>4?`<span class="cal-more">+${dayApps.length-4}</span>`:''}</div>` : ''}
+      ${hasApps ? `<div class="cal-tooltip">${dayApps.map(a=>`
+        <div class="cal-tooltip-item">
+          <strong>${escapeHtml(a.puesto||t('thPuesto'))}</strong>
+          <span class="cal-tooltip-empresa">${escapeHtml(a.empresa||'—')}</span><br>
+          <span class="cal-tooltip-status">${escapeHtml(a.estatus)}</span>
+        </div>`).join('')}</div>` : ''}
+    </div>`;
+  }
+  grid.innerHTML = cells;
+}
+
+/* ---------------- contactos ---------------- */
+function addContact(){
+  state.contacts.unshift({id:'p'+Date.now(), nombre:'', relacion:'', estatus: t('contactStatusOpts')[0], notas:''});
+  scheduleSave(); renderContacts();
+}
+function updateContact(id, field, value){
+  const c = state.contacts.find(x=>x.id===id);
+  if(!c) return;
+  c[field]=value;
+  scheduleSave();
+  if(field!=='notas') renderResumen();
+}
+function removeContact(id){
+  state.contacts = state.contacts.filter(c=>c.id!==id);
+  scheduleSave(); renderContacts();
+}
+function importarContactosRed(){
+  const nuevos = [
+    {nombre:'Eva Cristina Mariscal Michel', relacion:'Trabaja en Grupo PiSA (1er grado, LinkedIn, Universidad de Guadalajara)',
+      notas:'LinkedIn. Le compartiste tu CV (28 abr) para la vacante de Jefe de Validación en PiSA; ella preguntaría a quién le corresponde validación. Última respuesta: 3 jun.'},
+    {nombre:'Carolina Cervantes', relacion:'Excompañera TEVA-RIMSA, ahora Gerente Sr. de Operaciones / Aseguramiento de Calidad en Fresenius',
+      notas:'LinkedIn. La saludaste el 22 abr; quedó en tenerte en mente si sabe de algo en validación, supervisión u operación.'},
+    {nombre:'Maricela Cano Hernández', relacion:'Excompañera RIMSA, ahora Validation Head en Beiersdorf',
+      notas:'LinkedIn. Contacto el 22 abr; quedó en tenerte en cuenta por si surge una vacante.'},
+    {nombre:'Jesús Alejandro Ruiseco Nocetti', relacion:'Excompañero, Founding Member ISPE México Affiliate',
+      notas:'LinkedIn. Mencionó una vacante de Experto en Validación de Procesos (líquidos orales no estériles/nasales) en Toluca a través de un conocido; quedó en avisarte.'},
+    {nombre:'Urenda Adalys Diaz Diaz', relacion:'Jefe de Administración de Proyectos',
+      notas:'Facebook/WhatsApp. Se ofreció a pasar tu CV a gerentes de manufactura y desarrollo, y también a RH; comentó que a los supervisores de producción les va mejor ahí.'},
+    {nombre:'Hector Miguel De la Rosa Puga', relacion:'Jefe de Desarrollo de Productos de Línea',
+      notas:'Facebook/WhatsApp. Pidió tu CV; quedó pendiente de avisarte si ve alguna vacante en calidad o afín.'},
+    {nombre:'Jorge Alberto Rubio Sevilla', relacion:'Black Belt Lean Six Sigma / Gerente Tecnología Farmacéutica, ahora en Ultra Laboratorios (antes PiSA)',
+      notas:'Facebook. Mencionó una vacante en Ultra (planta Tlajomulco), área de optimización de procesos; preguntó también con un colega en PiSA.'},
+    {nombre:'Félix Mendoza Cruz', relacion:'Assoc. Dir. Engineering, Maintenance en TEVA',
+      notas:'WhatsApp. Le compartiste tu CV; quedó en preguntar con conocidos y en TEVA, especialmente para una jefatura.'},
+    {nombre:'Diana Gil Lara', relacion:'Ciencias de Manufactura Tecnológica MS&T',
+      notas:'LinkedIn — sin detalle de conversación en lo que compartiste; confirma si ya la contactaste.'},
+    {nombre:'Juan Robledo Santiago', relacion:'Jefe de Validación y Metrología / Jefe de Auditorías y CAPA',
+      notas:'LinkedIn — sin detalle de conversación en lo que compartiste; confirma si ya lo contactaste.'},
+  ];
+  const norm = s => (s||'').toLowerCase().trim();
+  let agregados = 0, yaExistian = 0;
+  nuevos.forEach(n => {
+    const existente = state.contacts.find(c => norm(c.nombre) === norm(n.nombre));
+    if(existente){
+      if(!existente.notas || !existente.notas.includes(n.notas.slice(0,20))){
+        existente.notas = (existente.notas ? existente.notas + ' | ' : '') + n.notas;
+      }
+      if(!existente.relacion) existente.relacion = n.relacion;
+      existente.estatus = t('contactStatusOpts')[1];
+      yaExistian++;
+      return;
+    }
+    state.contacts.push({
+      id:'p'+Date.now()+Math.random().toString(36).slice(2,7),
+      nombre: n.nombre, relacion: n.relacion, estatus: t('contactStatusOpts')[1], notas: n.notas
+    });
+    agregados++;
+  });
+  scheduleSave();
+  renderContacts();
+  const btn = document.getElementById('importContactsBtn');
+  if(btn){
+    btn.textContent = lang==='es'
+      ? `${agregados} nuevos, ${yaExistian} actualizados`
+      : `${agregados} new, ${yaExistian} updated`;
+  }
+}
+function renderContacts(){
+  const opts = t('contactStatusOpts');
+  const body = document.getElementById('contactsBody');
+  const empty = document.getElementById('contactsEmpty');
+  empty.style.display = state.contacts.length ? 'none' : 'block';
+  body.innerHTML = state.contacts.map(c=>`
+    <tr>
+      <td><input type="text" value="${escapeAttr(c.nombre)}" onchange="updateContact('${c.id}','nombre',this.value)"></td>
+      <td><input type="text" value="${escapeAttr(c.relacion)}" onchange="updateContact('${c.id}','relacion',this.value)"></td>
+      <td>
+        <select onchange="updateContact('${c.id}','estatus',this.value)">
+          ${opts.map(o=>`<option value="${o}" ${o===c.estatus?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" value="${escapeAttr(c.notas)}" onchange="updateContact('${c.id}','notas',this.value)"></td>
+      <td class="row-actions"><button onclick="removeContact('${c.id}')">✕</button></td>
+    </tr>
+  `).join('');
+  renderResumen();
+}
+
+/* ---------------- recomendaciones de CV ---------------- */
+function renderCvTips(){
+  const el = document.getElementById('cvTipsList');
+  if(!el) return;
+  el.innerHTML = t('cvTips').map(tip => `<li>${escapeHtml(tip)}</li>`).join('');
+}
+
+/* ---------------- banco de preguntas de entrevista ---------------- */
+const BANCO_ENTREVISTA = [
+  {cat:'Para romper el hielo', items:[
+    {id:'e01', p:'Cuéntame sobre ti / Háblame de ti', g:'No cuentes tu vida entera: arma un mini resumen de 60-90 segundos con tu formación, tu experiencia más relevante para el puesto, y por qué estás aquí. Termina conectando con la vacante, no con datos personales.'},
+    {id:'e02', p:'¿Por qué quieres trabajar en esta empresa?', g:'Demuestra que investigaste: menciona algo específico de la empresa (un producto, un valor, un proyecto) y conéctalo con lo que tú puedes aportar. Evita respuestas genéricas como "me gusta su prestigio".'},
+    {id:'e03', p:'¿Por qué te interesa este puesto en particular?', g:'Enlaza el puesto con tu trayectoria: qué de tu experiencia previa te preparó para esto y qué esperas desarrollar aquí que no has tenido antes.'},
+    {id:'e04', p:'¿Qué sabes de nuestra empresa?', g:'Antes de la entrevista, revisa su sitio web, su LinkedIn y noticias recientes. Menciona uno o dos datos concretos —no memorices párrafos— y relaciónalos con por qué quieres estar ahí.'},
+    {id:'e05', p:'¿Por qué deberíamos contratarte a ti y no a otro candidato?', g:'No te compares con candidatos que no conoces; enfócate en dos o tres fortalezas tuyas que resuelven exactamente lo que pide la vacante, con un ejemplo concreto de cada una.'},
+  ]},
+  {cat:'Experiencia y logros', items:[
+    {id:'e06', p:'Cuéntame sobre tu experiencia en el área del puesto', g:'Estructura cronológicamente pero destaca lo relevante para esta vacante, no todo. Usa cifras cuando puedas: porcentajes, tiempos, montos.'},
+    {id:'e07', p:'¿Cuál ha sido tu logro profesional más importante?', g:'Elige un logro medible: qué hiciste, para qué (el objetivo detrás), y cuánto se logró en números. Un logro con cifras es mucho más creíble que un adjetivo.'},
+    {id:'e08', p:'Describe un proyecto del que te sientas especialmente orgulloso', g:'Explica tu rol específico dentro del proyecto, no solo el resultado del equipo. El entrevistador quiere saber qué hiciste tú.'},
+    {id:'e09', p:'¿Cómo mides el éxito en tu trabajo?', g:'Habla de indicadores concretos de tu área (cumplimiento, calidad, tiempos, satisfacción del cliente interno) más que de sensaciones subjetivas.'},
+    {id:'e10', p:'¿Qué responsabilidades tenías en tu último puesto?', g:'Sé específico y ordenado: dos o tres responsabilidades principales, no una lista interminable. Prioriza las que se parezcan a la vacante actual.'},
+    {id:'e11', p:'¿Por qué dejaste tu trabajo anterior?', g:'Sé honesto pero enfócate en crecimiento, no en quejas. Nunca hables mal de jefes o empresas anteriores — el entrevistador se pregunta si algún día hablarás así de ellos.'},
+  ]},
+  {cat:'Fortalezas, debilidades y autoconocimiento', items:[
+    {id:'e12', p:'¿Cuáles son tus principales fortalezas?', g:'Elige dos o tres que coincidan con lo que pide la oferta y respáldalas con un ejemplo breve cada una. Decir solo la palabra ("soy responsable") no convence a nadie.'},
+    {id:'e13', p:'¿Cuál es tu mayor debilidad?', g:'Menciona una debilidad real pero no crítica para el puesto, y enfatiza qué estás haciendo para trabajarla. Evita los clichés tipo "soy demasiado perfeccionista".'},
+    {id:'e14', p:'¿Cómo te describirían tus excompañeros o tu jefe anterior?', g:'Si puedes, apóyate en retroalimentación real que hayas recibido (una evaluación, un comentario concreto) en vez de inventar adjetivos.'},
+    {id:'e15', p:'¿Qué tipo de ambiente laboral prefieres?', g:'Responde con honestidad pero investiga antes la cultura de la empresa — no digas que prefieres algo opuesto a como funcionan ellos.'},
+    {id:'e16', p:'¿Cómo manejas la crítica o la retroalimentación negativa?', g:'Da un ejemplo real de una crítica que recibiste, cómo reaccionaste y qué cambiaste a partir de ella. Muestra apertura, no defensividad.'},
+  ]},
+  {cat:'Comportamentales (método STAR)', items:[
+    {id:'e17', p:'Cuéntame de una vez que tuviste un conflicto con un compañero y cómo lo resolviste', g:'Usa el método STAR: Situación (el contexto), Tarea (tu responsabilidad), Acción (qué hiciste específicamente) y Resultado (qué se logró). Enfócate en cómo escuchaste ambas partes y buscaste un acuerdo, no en quién tenía la razón.'},
+    {id:'e18', p:'Describe una situación en la que lideraste un equipo', g:'Con STAR: qué proyecto era, cuál era tu rol de liderazgo específico, qué acciones tomaste para guiar al equipo, y el resultado medible que obtuvieron juntos.'},
+    {id:'e19', p:'Cuéntame sobre un fracaso o error importante y qué aprendiste', g:'Elige un error real (no trivial, pero tampoco catastrófico), asume tu responsabilidad sin excusas, y enfócate sobre todo en el aprendizaje y cómo cambió tu forma de trabajar después.'},
+    {id:'e20', p:'Describe una vez que tuviste que cumplir una fecha límite muy ajustada', g:'Explica cómo organizaste prioridades, qué recursos o ayuda buscaste, y si al final se cumplió el plazo — si no se cumplió, qué aprendiste para la próxima.'},
+    {id:'e21', p:'¿Cómo manejas el trabajo bajo presión o el estrés?', g:'Da un ejemplo concreto de una situación de presión real y qué técnica o hábito usaste para mantener la calidad de tu trabajo (priorizar, delegar, comunicar a tiempo).'},
+    {id:'e22', p:'Cuéntame sobre una vez que tuviste que adaptarte a un cambio inesperado', g:'Los reclutadores buscan flexibilidad. Explica el cambio, tu actitud inicial, y las acciones concretas que tomaste para ajustarte rápido sin perder productividad.'},
+    {id:'e23', p:'Describe una decisión difícil que tomaste sin tener toda la información', g:'Explica qué información sí tenías, cómo evaluaste el riesgo, y por qué decidiste como decidiste. El resultado importa menos que mostrar un criterio razonado.'},
+    {id:'e24', p:'Cuéntame sobre una vez que tomaste la iniciativa para mejorar un proceso', g:'Este tipo de pregunta busca proactividad. Describe el problema que notaste, qué propusiste, y el impacto medible de tu propuesta (tiempo ahorrado, errores reducidos, etc.).'},
+    {id:'e25', p:'Describe cómo manejaste a un cliente o proveedor difícil', g:'Muestra paciencia y enfoque en soluciones: qué generaba la fricción, cómo mantuviste la relación profesional, y cómo se resolvió al final.'},
+    {id:'e26', p:'Cuéntame sobre una vez que tuviste que dar una noticia difícil a tu equipo o a un superior', g:'Explica cómo preparaste el mensaje, cómo elegiste el momento y la forma de comunicarlo, y cómo manejaste la reacción de la otra persona.'},
+  ]},
+  {cat:'Motivación, cultura y futuro', items:[
+    {id:'e27', p:'¿Dónde te ves en 5 años?', g:'Muestra ambición realista y alineada con la empresa: crecer dentro de esa organización, no listar objetivos que no tienen nada que ver con el puesto que ofrecen.'},
+    {id:'e28', p:'¿Qué te motiva en el trabajo?', g:'Combina algo genuino (aprender, resolver problemas, ver resultados) con algo que la empresa realmente pueda ofrecerte — investiga antes qué valoran ellos.'},
+    {id:'e29', p:'¿Cómo te describes a ti mismo trabajando en equipo?', g:'Da un ejemplo concreto de tu rol típico en un equipo (quien organiza, quien media, quien ejecuta) en vez de solo un adjetivo.'},
+    {id:'e30', p:'¿Qué tipo de jefe o liderazgo te saca lo mejor?', g:'Sé honesto pero constructivo — describe el estilo que te funciona sin sonar exigente o difícil de dirigir.'},
+    {id:'e31', p:'¿Qué esperas de este puesto que no hayas tenido antes?', g:'Conecta con tu momento actual de carrera: qué reto, responsabilidad o aprendizaje específico buscas que esta posición sí ofrece.'},
+  ]},
+  {cat:'Preguntas delicadas o "trampa"', items:[
+    {id:'e32', p:'¿Cuáles son tus expectativas salariales?', g:'Investiga antes el rango de mercado para el puesto. Da un rango, no una cifra fija, y si puedes, intenta que el entrevistador diga primero su presupuesto ("¿qué rango tienen contemplado para esta posición?").'},
+    {id:'e33', p:'¿Por qué has estado tanto tiempo sin trabajar?', g:'Sé honesto y directo, sin sonar a disculpa. Enfócate en lo que hiciste durante ese tiempo (cursos, proyectos, cuidado de algo importante) y en que ya estás listo para regresar con energía.'},
+    {id:'e34', p:'¿Has tenido problemas con algún jefe anterior?', g:'Nunca hables mal de un jefe anterior, aunque haya sido real. Si hubo fricción, descríbela de forma neutral y enfócate en cómo la manejaste profesionalmente.'},
+    {id:'e35', p:'¿Estás entrevistando en otras empresas?', g:'Es válido decir que sí, sin dar nombres. Muestra que estás buscando activamente pero que esta oportunidad en particular te interesa por razones específicas.'},
+    {id:'e36', p:'¿Aceptarías este puesto si te lo ofreciéramos hoy mismo?', g:'Si de verdad te interesa, dilo con seguridad. Si tienes dudas reales, es mejor ser honesto sobre qué necesitarías saber antes de decidir, en vez de fingir certeza total.'},
+    {id:'e37', p:'Del uno al diez, ¿qué tan seguro estás de ser el candidato ideal?', g:'No hay respuesta "correcta" — lo que se evalúa es tu seguridad y tu capacidad de justificar el número con argumentos concretos, no la cifra en sí.'},
+  ]},
+  {cat:'Preguntas que tú le haces al entrevistador', items:[
+    {id:'e38', p:'¿Cómo es un día típico en este puesto?', g:'Te ayuda a validar si la vacante es lo que imaginas, y muestra que ya te estás viendo trabajando ahí — siempre causa buena impresión.'},
+    {id:'e39', p:'¿Cómo se va a medir el éxito en esta posición en los primeros meses?', g:'Esta pregunta muestra orientación a resultados y te da claridad de qué esperan exactamente de ti desde el primer día.'},
+    {id:'e40', p:'¿Qué retos está enfrentando el equipo o el área ahora mismo?', g:'Te da información valiosa para decidir si quieres el puesto, y demuestra que piensas en cómo aportar desde el primer día, no solo en lo que vas a recibir.'},
+    {id:'e41', p:'¿Cómo describirías la cultura del equipo o el estilo de liderazgo?', g:'Ayuda a confirmar si encajas con la forma de trabajar de la empresa antes de comprometerte.'},
+    {id:'e42', p:'¿Cuáles son los siguientes pasos del proceso?', g:'Nunca termines una entrevista sin preguntar esto — muestra interés genuino y te da claridad sobre cuándo dar seguimiento sin parecer impaciente.'},
+  ]},
+];
+function toggleEntrevistaPracticada(id){
+  if(!state.interviewChecked) state.interviewChecked = [];
+  const idx = state.interviewChecked.indexOf(id);
+  if(idx === -1) state.interviewChecked.push(id); else state.interviewChecked.splice(idx,1);
+  scheduleSave();
+  updateEntrevistaItemUI(id);
+}
+function updateEntrevistaItemUI(id){
+  const checked = state.interviewChecked||[];
+  const isChecked = checked.includes(id);
+  const itemEl = document.querySelector(`.entrevista-item[data-id="${id}"]`);
+  if(itemEl){
+    itemEl.classList.toggle('done', isChecked);
+    const btn = itemEl.querySelector('.entrevista-check-btn');
+    if(btn) btn.textContent = isChecked ? t('entrevistaPracticadaBtn') : t('entrevistaMarcarBtn');
+  }
+  const gIdx = BANCO_ENTREVISTA.findIndex(g=>g.items.some(i=>i.id===id));
+  if(gIdx > -1){
+    const grupo = BANCO_ENTREVISTA[gIdx];
+    const countEl = document.getElementById('count-'+gIdx);
+    if(countEl) countEl.textContent = `${grupo.items.filter(i=>checked.includes(i.id)).length}/${grupo.items.length}`;
+  }
+  const total = BANCO_ENTREVISTA.reduce((a,g)=>a+g.items.length,0);
+  const progEl = document.getElementById('entrevistaProgress');
+  if(progEl) progEl.textContent = t('entrevistaProgress').replace('{n}', checked.length).replace('{total}', total);
+}
+function updateEntrevistaSpeech(id, value){
+  if(!state.interviewSpeech) state.interviewSpeech = {};
+  state.interviewSpeech[id] = value;
+  scheduleSave();
+}
+let entrevistaAudio = {};       // id -> {recorder, stream}
+let entrevistaGrabandoId = null;
+async function grabarRespuesta(id){
+  const btn = document.getElementById('recbtn-'+id);
+  // si ya se está grabando esta misma pregunta, deténla
+  if(entrevistaGrabandoId === id){
+    const actual = entrevistaAudio[id];
+    if(actual && actual.recorder && actual.recorder.state !== 'inactive') actual.recorder.stop();
+    return;
+  }
+  // si había otra grabación activa, deténla primero para liberar el micrófono
+  if(entrevistaGrabandoId){
+    const otro = entrevistaAudio[entrevistaGrabandoId];
+    if(otro && otro.recorder && otro.recorder.state !== 'inactive') otro.recorder.stop();
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const chunks = [];
+    const recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, {type: recorder.mimeType || 'audio/webm'});
+      const url = URL.createObjectURL(blob);
+      const wrap = document.getElementById('audiowrap-'+id);
+      if(wrap) wrap.innerHTML = `<audio controls src="${url}"></audio>`;
+      stream.getTracks().forEach(tr=>tr.stop());
+      const b = document.getElementById('recbtn-'+id);
+      if(b) b.textContent = '🎙️ ' + t('entrevistaGrabarOtraVezBtn');
+      entrevistaGrabandoId = null;
+    };
+    entrevistaAudio[id] = {recorder, stream};
+    recorder.start();
+    entrevistaGrabandoId = id;
+    if(btn) btn.textContent = '⏹️ ' + t('entrevistaDetenerBtn');
+  }catch(err){
+    console.error('No se pudo acceder al micrófono', err);
+    alert(t('entrevistaMicError'));
+  }
+}
+function renderEntrevistaBanco(){
+  const el = document.getElementById('entrevistaBanco');
+  const progEl = document.getElementById('entrevistaProgress');
+  if(!el) return;
+  if(!state.interviewChecked) state.interviewChecked = [];
+  if(!state.interviewSpeech) state.interviewSpeech = {};
+  const checked = state.interviewChecked;
+  const speech = state.interviewSpeech;
+  const total = BANCO_ENTREVISTA.reduce((a,g)=>a+g.items.length,0);
+  if(progEl) progEl.textContent = t('entrevistaProgress').replace('{n}', checked.length).replace('{total}', total);
+  el.innerHTML = BANCO_ENTREVISTA.map((grupo, gIdx) => `
+    <details class="entrevista-grupo" id="grupo-${gIdx}">
+      <summary>${escapeHtml(grupo.cat)} <span class="entrevista-grupo-count" id="count-${gIdx}">${grupo.items.filter(i=>checked.includes(i.id)).length}/${grupo.items.length}</span></summary>
+      ${grupo.items.map(item => `
+        <div class="entrevista-item ${checked.includes(item.id)?'done':''}" data-id="${item.id}">
+          <p class="entrevista-pregunta">${escapeHtml(item.p)}</p>
+          <p class="entrevista-guia">${escapeHtml(item.g)}</p>
+          <textarea class="entrevista-speech" data-i18n-ph="entrevistaSpeechPh" placeholder="${escapeAttr(t('entrevistaSpeechPh'))}" onchange="updateEntrevistaSpeech('${item.id}', this.value)">${escapeHtml(speech[item.id]||'')}</textarea>
+          <div class="entrevista-record-row">
+            <button class="entrevista-record-btn" id="recbtn-${item.id}" onclick="grabarRespuesta('${item.id}')">🎙️ ${t('entrevistaGrabarBtn')}</button>
+            <div class="entrevista-audio-wrap" id="audiowrap-${item.id}"></div>
+          </div>
+          <button class="entrevista-check-btn" onclick="toggleEntrevistaPracticada('${item.id}')">
+            ${checked.includes(item.id) ? t('entrevistaPracticadaBtn') : t('entrevistaMarcarBtn')}
+          </button>
+        </div>`).join('')}
+    </details>`).join('');
+}
+
+/* ---------------- frases ---------------- */
+function renderQuotes(){
+  document.getElementById('quoteGrid').innerHTML = t('quotes').map(q=>`<div class="quote-card"><p>${escapeHtml(q)}</p></div>`).join('');
+}
+
+/* ---------------- resumen ---------------- */
+function renderResumen(){
+  const start = new Date(state.startDate);
+  const today = new Date();
+  const days = Math.max(1, Math.floor((today-start)/86400000)+1);
+  document.getElementById('statDias').textContent = days;
+  document.getElementById('dayCounterText').textContent = t('dayCounter').replace('{n}', days);
+  const opts = t('statusOpts');
+  const enviadas = state.applications.filter(a=>a.estatus!==opts[0]).length;
+  const entrevistas = state.applications.filter(a=>a.estatus===opts[3]||a.estatus===opts[4]).length;
+  document.getElementById('statEnviadas').textContent = enviadas;
+  document.getElementById('statEntrevistas').textContent = entrevistas;
+  document.getElementById('statContactos').textContent = state.contacts.length;
+  renderResumenGoals();
+}
+
+/* ---------------- utils ---------------- */
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+function renderAll(){
+  applyStaticI18n();
+  renderInventory(); renderGoals(); renderApplications();
+  renderContacts(); renderCvTips(); renderQuotes(); renderResumen(); updateDoor();
+  renderSitiosBuscador(); renderEntrevistaBanco();
+  updateIdentityUI();
+}
+
+/* ---------------- portada ---------------- */
+function hidePortada(){
+  document.getElementById('portada').classList.add('hidden');
+  localStorage.setItem('portada-vista','1');
+}
+if(localStorage.getItem('portada-vista') === '1'){
+  document.getElementById('portada').classList.add('hidden');
+}
+
+/* ================= INIT ================= */
+applyStaticI18n();
+(async ()=>{
+  if(authToken){
+    try{
+      const data = await api('/auth/me');
+      currentUser = data.user;
+    }catch(e){
+      localStorage.removeItem('token'); authToken = null;
+    }
+  }
+  await loadState();
+})();
+</script>
+</body>
+</html>
