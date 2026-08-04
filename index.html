@@ -510,6 +510,7 @@
         <button class="save-link-btn" id="saveLinkBtn" onclick="openSaveModal()" data-i18n="saveLinkBtn">Guardar</button>
       </div>
       <div class="save-note" id="saveNote" style="margin-top:10px;"><span class="dotlive"></span><span id="saveNoteText" data-i18n="localSave">Guardado en este navegador</span></div>
+      <button class="save-link-btn" style="margin-top:8px;display:block;" onclick="showPortadaAgain()" data-i18n="verPortadaBtn">Ver portada de nuevo</button>
     </div>
   </aside>
 
@@ -858,7 +859,7 @@ const T = {
     portadaSub:'Aquí es donde organizas cada puerta que tocas, hasta que una se abra.',
     portadaBtn:'Comenzar',
     guestLabel:'Modo invitado', guestBadge:'Sin guardar',
-    logoutBtn:'Salir', saveLinkBtn:'Guardar', localSave:'Guardado en este navegador',
+    logoutBtn:'Salir', saveLinkBtn:'Guardar', localSave:'Guardado en este navegador', verPortadaBtn:'Ver portada de nuevo',
     savingNote:'Guardando…', savedLocalNote:'Guardado en este navegador', savedServerNote:'Guardado automático', errorNote:'No se pudo guardar',
     heroTitle:'Cuando una puerta se cierra',
     heroSub:'Aquí llevas orden de tu inventario, tus metas, tus solicitudes y tu red — mientras tocar puertas es el trabajo del día.',
@@ -969,7 +970,7 @@ const T = {
     portadaSub:'This is where you organize every door you knock on, until one opens.',
     portadaBtn:'Get started',
     guestLabel:'Guest mode', guestBadge:'Not saved',
-    logoutBtn:'Log out', saveLinkBtn:'Save', localSave:'Saved in this browser',
+    logoutBtn:'Log out', saveLinkBtn:'Save', localSave:'Saved in this browser', verPortadaBtn:'View cover again',
     savingNote:'Saving…', savedLocalNote:'Saved in this browser', savedServerNote:'Auto-saved', errorNote:'Could not save',
     heroTitle:'When one door closes',
     heroSub:'Keep your inventory, goals, applications, and network organized — while knocking on doors is the job for today.',
@@ -1594,40 +1595,64 @@ function removeApp(id){
   scheduleSave(); renderApplications();
 }
 function importarSolicitudesCapturas(){
+  // Lista completa y reconciliada: junta lo visto en tus capturas de pantalla
+  // y lo confirmado por tu revisión de correo — 18 solicitudes únicas en total.
+  const NO_ESPECIFICADA = 'no especificada';
   const importadas = [
-    {empresa:'Fresenius Kabi México, S.A. de C.V.', puesto:'Ingeniería de Validaciones', fecha:'2026-05-27', estatus:'Enviada', notas:'Jalisco. Salario no mostrado.'},
-    {empresa:'MediAccess SAPi de CV', puesto:'Jefe de Validación', fecha:'2026-05-27', estatus:'Enviada', notas:'El Salto, Jal. $30,000–$32,000. 50% de postulaciones revisadas (Indeed).'},
+    {empresa:'Fresenius Kabi México, S.A. de C.V.', puesto:'Ingeniería de Validaciones', fecha:'2026-05-27', estatus:'Enviada', notas:'Jalisco. Salario no mostrado. Confirmado también por correo vía OCC.'},
+    {empresa:'MediAccess SAPI de CV', puesto:'Jefe de Validación', fecha:'2026-07-03', estatus:'Enviada', notas:'El Salto, Jal. $30,000–$32,000. Vía Indeed. Confirmado por correo.'},
     {empresa:'Confidential Company', puesto:'Gerente de Operaciones Ramo Farmacéutico', fecha:'2026-01-07', estatus:'No', notas:'Jalisco. $75,000–$90,000. Vacante cerrada.'},
-    {empresa:'Humana 11', puesto:'Director General', fecha:'', estatus:'Enviada', notas:'Tepatitlán de Morelos, Jal. (Indeed).'},
-    {empresa:'Bachoco', puesto:'Analista Información Gerencial', fecha:'', estatus:'Enviada', notas:'Desde casa (Indeed).'},
-    {empresa:'KIngs Crown Candies', puesto:'Gerente de Planta', fecha:'', estatus:'Enviada', notas:'Tepatitlán de Morelos Centro, Jal. 80% revisadas. Indeed marca respuesta poco probable.'},
-    {empresa:'Aleaciones Dentales Zeyco', puesto:'Supervisor de acondicionamiento de estériles', fecha:'', estatus:'No', notas:'La Haciendita, Jal. La empresa no te seleccionó (Indeed).'},
-    {empresa:'Laboratorios Sophia', puesto:'Ingeniero de Validación de Sistemas Críticos', fecha:'2026-07-19', estatus:'Enviada', notas:'Guadalajara, Jal. (Indeed).'},
-    {empresa:'Ulsa Tech', puesto:'Supervisor de Manufactura de sólidos', fecha:'', estatus:'Enviada', notas:'Guadalajara, Jal. 50% revisadas. Indeed marca respuesta poco probable.'},
-    {empresa:'Productos Maver, S.A. de C.V.', puesto:'Supervisor de Proceso Naturex', fecha:'', estatus:'Enviada', notas:'Guadalajara, Jal. (Indeed).'},
-    {empresa:'Ultra Laboratorios', puesto:'Supervisor de Validación de Sistemas Críticos', fecha:'', estatus:'Enviada', notas:'Parque Industrial El Álamo, Jal. Postulado el mismo día (Indeed).'},
-    {empresa:'Lácteos La Montesa', puesto:'Supervisor de Planta', fecha:'', estatus:'Enviada', notas:'Las Cumbres, Ags. (Indeed).'},
+    {empresa:'Humana 11', puesto:'Director General', fecha:'2026-06-30', estatus:'Enviada', notas:'Tepatitlán de Morelos, Jal. Vía Indeed. Confirmado por correo.'},
+    {empresa:'Bachoco', puesto:'Analista de Información Gerencial', fecha:'2026-07-06', estatus:'Enviada', notas:'Desde casa (remoto). Vía Indeed. Confirmado por correo.'},
+    {empresa:'Kings Crown Candies', puesto:'Gerente de Planta', fecha:'2026-07-03', estatus:'Enviada', notas:'Tepatitlán de Morelos Centro, Jal. Vía Indeed. Confirmado por correo.'},
+    {empresa:'Aleaciones Dentales Zeyco', puesto:'Supervisor de Acondicionamiento de Estériles', fecha:'2026-07-06', estatus:'No', notas:'La Haciendita, Jal. La empresa no te seleccionó. Vía Indeed. Confirmado por correo.'},
+    {empresa:'Laboratorios Sophia', puesto:'Ingeniero de Validación', fecha:'2026-07-16', estatus:'Enviada', notas:'Guadalajara, Jal. Directo (sitio de empresa). Confirmado por correo.'},
+    {empresa:'Ulsa Tech', puesto:'Supervisor de Manufactura de Sólidos', fecha:'2026-07-16', estatus:'Enviada', notas:'Guadalajara, Jal. Vía Indeed. Confirmado por correo.'},
+    {empresa:'Productos Maver, S.A. de C.V.', puesto:'Supervisor de Proceso Naturex', fecha:'2026-07-21', estatus:'Enviada', notas:'Guadalajara, Jal. Vía Indeed. Confirmado por correo.'},
+    {empresa:'Ultra Laboratorios', puesto:'Supervisor de Validación de Sistemas Críticos', fecha:'2026-08-03', estatus:'Enviada', notas:'Parque Industrial El Álamo, Jal. Vía Indeed. Confirmado por correo.'},
+    {empresa:'Lácteos La Montesa', puesto:'Supervisor de Planta', fecha:'2026-07-28', estatus:'Enviada', notas:'Las Cumbres, Ags. Vía Indeed. Confirmado por correo.'},
     {empresa:'Stark Pharma Solutions Inc', puesto:'Process Validation Engineer', fecha:'', estatus:'Enviada', notas:'Raleigh, NC. Contrato por obra. Vía LinkedIn — contactado por Karthik Mutyala.'},
+    {empresa:NO_ESPECIFICADA, puesto:'Jefatura de Producción', fecha:'2026-07-08', estatus:'Enviada', notas:'Vía OCC. Confirmado por correo.'},
+    {empresa:'Biofarma Natural CMD', puesto:'Director de Cadena de Suministro (farmacéutica)', fecha:'2026-07-07', estatus:'Enviada', notas:'Vía Indeed. Confirmado por correo.'},
+    {empresa:'CobaltoTalent', puesto:'Director de Operaciones e Innovación', fecha:'2026-07-06', estatus:'Enviada', notas:'Vía Indeed. Confirmado por correo.'},
+    {empresa:NO_ESPECIFICADA, puesto:'Químico de Validación', fecha:'2026-06-24', estatus:'Enviada', notas:'Vía OCC. Confirmado por correo.'},
+    {empresa:'Grupo PiSA', puesto:'Puesto no especificado', fecha:'2026-05-21', estatus:'Enviada', notas:'Vía sitio directo de la empresa. Confirmado por correo.'},
   ];
-  const yaExiste = (empresa, puesto) => state.applications.some(a =>
-    a.empresa.trim().toLowerCase() === empresa.trim().toLowerCase() &&
-    a.puesto.trim().toLowerCase() === puesto.trim().toLowerCase());
-  let agregadas = 0;
+  const normEmpresa = s => (s||'').toLowerCase().replace(/\(.*\)/,'').trim();
+  const normPuesto = s => (s||'').toLowerCase().trim();
+  let agregadas = 0, actualizadas = 0;
   importadas.forEach(imp => {
-    if(yaExiste(imp.empresa, imp.puesto)) return;
+    let existente = null;
+    if(normEmpresa(imp.empresa) !== NO_ESPECIFICADA){
+      existente = state.applications.find(a => normEmpresa(a.empresa) === normEmpresa(imp.empresa));
+    } else {
+      // sin nombre de empresa identificado: coincide por puesto + fecha para no duplicar
+      existente = state.applications.find(a =>
+        normPuesto(a.puesto) === normPuesto(imp.puesto) && a.fecha === imp.fecha);
+    }
+    if(existente){
+      let cambio = false;
+      if(imp.fecha && existente.fecha !== imp.fecha){ existente.fecha = imp.fecha; cambio = true; }
+      if(!existente.notas || !existente.notas.includes('Confirmado por correo')){
+        existente.notas = (existente.notas ? existente.notas + ' ' : '') + imp.notas;
+        cambio = true;
+      }
+      if(cambio) actualizadas++;
+      return;
+    }
     state.applications.push({
       id:'a'+Date.now()+Math.random().toString(36).slice(2,7),
-      empresa: imp.empresa, puesto: imp.puesto, fecha: imp.fecha,
-      contacto:'', estatus: imp.estatus, seguimiento:'', notas: imp.notas
+      empresa: normEmpresa(imp.empresa) === NO_ESPECIFICADA ? t('empresaNoEspecificada').replace('{via}', 'OCC') : imp.empresa,
+      puesto: imp.puesto, fecha: imp.fecha, contacto:'', estatus: imp.estatus, seguimiento:'', notas: imp.notas
     });
     agregadas++;
   });
   scheduleSave();
   renderApplications();
   const btn = document.getElementById('importAppsBtn');
-  if(btn) btn.textContent = agregadas > 0
-    ? (lang==='es' ? `Se importaron ${agregadas} solicitudes` : `${agregadas} applications imported`)
-    : (lang==='es' ? 'Ya estaban importadas' : 'Already imported');
+  if(btn) btn.textContent = lang==='es'
+    ? `${agregadas} nuevas, ${actualizadas} actualizadas (18 en total)`
+    : `${agregadas} new, ${actualizadas} updated (18 total)`;
 }
 function importarSolicitudesInbox(){
   // Confirmadas por correo (revisión directa de bandeja de entrada) — fechas reales.
@@ -2043,7 +2068,8 @@ function renderQuotes(){
 
 /* ---------------- resumen ---------------- */
 function renderResumen(){
-  const start = new Date(state.startDate);
+  const fechas = state.applications.map(a=>a.fecha).filter(Boolean).sort();
+  const start = fechas.length ? new Date(fechas[0] + 'T00:00:00') : new Date(state.startDate);
   const today = new Date();
   const days = Math.max(1, Math.floor((today-start)/86400000)+1);
   document.getElementById('statDias').textContent = days;
@@ -2073,6 +2099,10 @@ function renderAll(){
 function hidePortada(){
   document.getElementById('portada').classList.add('hidden');
   localStorage.setItem('portada-vista','1');
+}
+function showPortadaAgain(){
+  localStorage.removeItem('portada-vista');
+  document.getElementById('portada').classList.remove('hidden');
 }
 if(localStorage.getItem('portada-vista') === '1'){
   document.getElementById('portada').classList.add('hidden');
